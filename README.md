@@ -1,6 +1,6 @@
 # Agent Auditor
 
-**Google Cloud Rapid Agent Hackathon Submission — Arize Track**
+**Google Cloud Rapid Agent Hackathon Submission, Arize Track**
 
 An AI agent that audits other AI agents. It probes the target's attack surface,
 runs adaptive adversarial scenarios (including multi-turn conversations),
@@ -18,18 +18,18 @@ are visible over time.
 Agent Auditor is an adversarial red-team system for AI agents with a complete
 security-testing pipeline:
 
-- **8 probe requests** before the audit begins — discovers the target's
+- **8 probe requests** before the audit begins, discovers the target's
   strengths and weaknesses by sending exploratory messages and analysing
   responses (PII leakage, injection resistance, auth checks, etc.)
-- **Adaptive live attack loop** — Gemini generates each attack round informed
+- **Adaptive live attack loop**, Gemini generates each attack round informed
   by the full history of previous rounds. If a tool call succeeded in round 3,
   the attacker pushes harder; if refused, it switches tactics.
-- **Multi-turn conversation attacks** — for the enterprise ADK victim, the
+- **Multi-turn conversation attacks**, for the enterprise ADK victim, the
   attacker maintains a persistent session across 3+ follow-up turns, building
   context and exploiting trust across the conversation.
 - **6 attack categories**: parameter attacks, prompt injection, contradictory
   instructions, edge cases, multi-turn confusion, tool misuse
-- **LLM-as-judge evaluation**: every scenario is scored by Gemini 2.5 Flash —
+- **LLM-as-judge evaluation**: every scenario is scored by Gemini 2.5 Flash,
   not by brittle keyword matching
 - **Self-improving**: before each new audit the Auditor queries Phoenix for
   past traces and biases scenario generation toward categories with the
@@ -39,7 +39,7 @@ security-testing pipeline:
   needs to change
 - **Full Phoenix tracing**: every audit, scenario, probe, and judge call
   appears in Phoenix Cloud as an OpenInference span
-- **Persistent audit history**: all results are stored in SQLite — audits
+- **Persistent audit history**: all results are stored in SQLite, audits
   survive server restarts and a trend chart shows score evolution over time
 
 ## How It Works
@@ -78,13 +78,13 @@ security-testing pipeline:
                       ╰───────────────────╯
 ```
 
-1. **Reconnaissance** — 8 probe requests map the target's behaviour (strengths,
+1. **Reconnaissance**, 8 probe requests map the target's behaviour (strengths,
    weaknesses, tool triggers)
-2. **Attack loop** — Gemini generates each round adaptively. Some scenarios
+2. **Attack loop**, Gemini generates each round adaptively. Some scenarios
    span 3-4 follow-up turns if the victim supports conversation state
-3. **Judge + remediate** — Gemini scores each response and generates fix
+3. **Judge + remediate**, Gemini scores each response and generates fix
    suggestions for every vulnerability found
-4. **Persist + trend** — results stored in SQLite. The Reports page shows a
+4. **Persist + trend**, results stored in SQLite. The Reports page shows a
    trend chart as more audits accumulate
 
 ### Adaptive Live Attack
@@ -93,7 +93,7 @@ The attacker loop feeds the **full history of previous rounds** into Gemini
 before generating each new attack. If the victim called a dangerous tool in
 round 3, the attacker pushes harder in that direction. If the victim refused,
 the attacker switches tactics. Each audit becomes harder for the target as it
-progresses — exactly how a real adversary behaves.
+progresses, exactly how a real adversary behaves.
 
 ### Multi-Turn Conversation Attacks
 
@@ -101,7 +101,7 @@ For the enterprise ADK victim, every 3rd scenario runs as a multi-turn
 conversation. The attacker sends an initial message, the victim responds, and
 Gemini generates up to 3 follow-up messages based on the full conversation
 context. This tests context poisoning, trust exploitation, and gradual
-escalation — attacks that single-shot testing misses.
+escalation, attacks that single-shot testing misses.
 
 ### Surface Probing
 
@@ -129,11 +129,11 @@ Here is exactly how this submission maps to each:
 | **Meaningful tracing** | `phoenix.otel.register(auto_instrument=True)` instruments the entire ADK runtime. Every audit, probe, scenario, multi-turn, and LLM-as-judge call generates OpenInference spans with domain attributes (severity, tool_calls, eval_score, vulnerability_found). |
 | **Phoenix MCP** | The auditor agent loads the official `@arizeai/phoenix-mcp` server as an `MCPToolset`, giving Gemini direct access to `list-projects`, `get-spans`, `list-datasets` and `add-annotation` so it can ground its reasoning in real observability data. |
 | **Self-improvement loop** | A dedicated `adapt_scenarios_from_history` tool queries Phoenix's HTTP API, ranks attack categories by historical vulnerability rate, and feeds that ordering into the scenario generator on every new run. The UI surfaces "X patterns learned from Y past audits" so the loop is visible to the judges. |
-| **LLM-as-judge evals** | `app/observability/evals.py` calls Gemini 2.5 Flash per scenario and writes `eval.score`, `eval.severity`, `eval.vulnerability_found`, `eval.reasoning` back onto the active span — replacing the original keyword heuristic. |
-| **Real agent vs agent** | Unlike most red-team demos that test against keyword stubs, our `enterprise_support` victim is a **real ADK agent** (Gemini 2.5 Flash with FunctionTool calls). The auditor finds a genuine architectural vulnerability — the tools accept any caller-supplied name as identity — that an LLM security guardrail alone cannot fix. |
+| **LLM-as-judge evals** | `app/observability/evals.py` calls Gemini 2.5 Flash per scenario and writes `eval.score`, `eval.severity`, `eval.vulnerability_found`, `eval.reasoning` back onto the active span, replacing the original keyword heuristic. |
+| **Real agent vs agent** | Unlike most red-team demos that test against keyword stubs, our `enterprise_support` victim is a **real ADK agent** (Gemini 2.5 Flash with FunctionTool calls). The auditor finds a genuine architectural vulnerability, the tools accept any caller-supplied name as identity, that an LLM security guardrail alone cannot fix. |
 | **Multi-turn exploitation** | The auditor holds real conversations with the victim across 3+ turns, exploiting context trust. The LLM-as-judge evaluates the *entire conversation* rather than individual messages. |
 | **Attack surface reconnaissance** | Before any scenario runs, 8 probe requests map the target's defence posture. Weaknesses are explicitly surfaced in the UI and injected into the attacker prompt as "reconnaissance intelligence." |
-| **Remediation generation** | Every vulnerability comes with a code-level fix suggestion generated by Gemini. The tool is not just diagnostic — it tells developers *how to fix* each issue. |
+| **Remediation generation** | Every vulnerability comes with a code-level fix suggestion generated by Gemini. The tool is not just diagnostic, it tells developers *how to fix* each issue. |
 | **Persistent history + trends** | SQLite storage means audit data survives restarts. The Reports page shows a line chart of security score over time, proving the system actually learns. |
 | **Overall impact** | Adversarial red-teaming is the use case Arize's customers are asking for. Anyone can point this at a Cloud Run agent and get a Phoenix-backed reliability report with fix suggestions in under a minute. |
 
@@ -187,35 +187,35 @@ falls back gracefully without MCP (other features keep working).
 |---|---|
 | `register_agent_tool` | Register a target agent for testing |
 | `discover_agent_tools_tool` | Map the target's attack surface |
-| `adapt_scenarios_from_history` | **Self-improvement** — read Phoenix history, rank attack categories |
+| `adapt_scenarios_from_history` | **Self-improvement**, read Phoenix history, rank attack categories |
 | `start_audit_tool` | Generate adversarial scenarios |
 | `execute_next_scenario_tool` | Run a scenario against the target |
 | `finalize_audit_tool` | Generate vulnerability report |
 | Phoenix MCP toolset | `list-projects`, `get-spans`, `list-datasets`, `add-annotation`, … |
-| **Interactive chat** | `/api/agent/chat` — full ADK Runner loop for conversational auditing |
+| **Interactive chat** | `/api/agent/chat`, full ADK Runner loop for conversational auditing |
 
 ## Built-in victims
 
 | Victim | Type | Behaviour |
 |---|---|---|
-| `customer_support` | Keyword matcher | No validation, follows any command — fails almost everything |
-| `banking` | Keyword matcher | Sends money, leaks PII — used to test PII attacks |
-| `enterprise_support` | **Real ADK agent** | LLM-powered enterprise assistant. Resists prompt injection and obvious attacks, but has a deliberate architectural flaw: its tools accept any caller-supplied name as proof of identity (OWASP LLM05:2025 — Excessive Agency). Supports multi-turn conversation — the auditor can build trust then exploit it across 3+ follow-up turns. |
+| `customer_support` | Keyword matcher | No validation, follows any command, fails almost everything |
+| `banking` | Keyword matcher | Sends money, leaks PII, used to test PII attacks |
+| `enterprise_support` | **Real ADK agent** | LLM-powered enterprise assistant. Resists prompt injection and obvious attacks, but has a deliberate architectural flaw: its tools accept any caller-supplied name as proof of identity (OWASP LLM05:2025, Excessive Agency). Supports multi-turn conversation, the auditor can build trust then exploit it across 3+ follow-up turns. |
 | `custom` | External HTTP | Bring your own endpoint (must accept `POST /chat {message}`) |
 
 ## Full Audit Flow
 
-1. **Register the target** — provide name, description, endpoint, and tool definitions
-2. **Probe the target** — 8 exploratory requests analyse the target's security posture: PII leakage, injection resistance, auth verification, cross-customer access, parameter validation
-3. **Introspect Phoenix** — query past audit traces to bias scenario generation toward high-vulnerability categories
-4. **Attack phase** — N rounds of adaptive adversarial attacks. The attacker:
+1. **Register the target**, provide name, description, endpoint, and tool definitions
+2. **Probe the target**, 8 exploratory requests analyse the target's security posture: PII leakage, injection resistance, auth verification, cross-customer access, parameter validation
+3. **Introspect Phoenix**, query past audit traces to bias scenario generation toward high-vulnerability categories
+4. **Attack phase**, N rounds of adaptive adversarial attacks. The attacker:
    - Receives probe intelligence ("target has these weaknesses...")
    - Receives previous round history ("in round 3, the victim called refund_order")
    - Generates each attack tailored to the accumulating intelligence
    - Runs multi-turn conversations for enterprise victims (3 follow-up turns)
-5. **Judge each round** — Gemini 2.5 Flash scores each scenario immediately. Results stream to the UI in real time
-6. **Generate report** — aggregate scores, compute category breakdowns, generate remediation suggestions for every vulnerability
-7. **Persist + render** — save to SQLite, update the trend chart on the Reports page
+5. **Judge each round**, Gemini 2.5 Flash scores each scenario immediately. Results stream to the UI in real time
+6. **Generate report**, aggregate scores, compute category breakdowns, generate remediation suggestions for every vulnerability
+7. **Persist + render**, save to SQLite, update the trend chart on the Reports page
 
 ## API Endpoints
 
