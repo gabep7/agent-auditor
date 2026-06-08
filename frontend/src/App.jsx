@@ -9,9 +9,9 @@ export default function App() {
   const [page, setPage] = useState('audit');
 
   return (
-    <div className="flex h-screen overflow-hidden grid-bg">
+    <div className="flex h-screen flex-col overflow-hidden grid-bg md:flex-row">
       <Sidebar current={page} onNavigate={setPage} />
-      <main className="flex-1 overflow-y-auto p-5">
+      <main className="flex-1 overflow-y-auto p-4 md:p-5">
         <section className={page === 'audit' ? 'block h-full' : 'hidden'}>
           <AuditPage />
         </section>

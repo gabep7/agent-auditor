@@ -57,7 +57,7 @@ export default function AuditPage() {
     addLog('system', 'Agent Auditor initialized');
     addLog('system', `Target: ${victimType} (${targetUrl})`);
 
-    const ctrl = streamAudit(targetUrl, victimType, 6, {
+    const ctrl = streamAudit(targetUrl, victimType, 1, {
       onProgress(data) {
         if (data.step === 'register' || data.step === 'registered' || data.step === 'generating' || data.step === 'generated') {
           addLog('system', data.message);
@@ -127,7 +127,7 @@ export default function AuditPage() {
 
     const ctrl = runBenchmark({
       victims: ['customer_support', 'banking', 'enterprise_support'],
-      scenarioCount: 3,
+      scenarioCount: 1,
       onProgress(data) {
         if (data.step === 'benchmark_start') {
           setProgress({ current: 0, total: data.total_tests || 18, message: data.message });
@@ -193,102 +193,158 @@ export default function AuditPage() {
 
   const vulnCount = scenarioResults.filter(s => s.vulnerability_found).length;
   const safeCount = scenarioResults.filter(s => !s.vulnerability_found).length;
+  const selectedVictim = VICTIM_TYPES.find(v => v.id === victimType) || VICTIM_TYPES[0];
 
   // Hero state (before audit)
 
   if (!running && !benchmarkRunning && !complete && scenarioResults.length === 0) {
+    const SelectedIcon = selectedVictim.icon;
+
     return (
-      <div className="h-full flex flex-col max-h-[calc(100vh-3rem)] animate-fade-in">
-        {/* Compact header */}
-        <div className="mb-6">
-          <h1 className="text-xl font-extrabold text-auditor-100 tracking-tight">
-            Agent <span className="text-neon-green text-glow-green">Auditor</span>
+      <div className="flex min-h-full flex-col animate-fade-in">
+        <div className="mb-6 flex flex-col gap-3 border-b lab-rule pb-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="font-display text-4xl text-auditor-100 tracking-tight">
+            Agent Auditor
           </h1>
-          <p className="text-xs text-auditor-500 mt-1">Select a target and launch an adversarial audit powered by Gemini LLM-as-judge.</p>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-auditor-400">
+              Red-team AI agents, score real failures, and turn traces into an evidence-backed audit.
+            </p>
+          </div>
+          <div className="inline-flex w-fit items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-[11px] font-semibold text-auditor-300">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            Phoenix tracing enabled
+          </div>
         </div>
 
-        {/* Target selector */}
-        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
-          <div className="text-[10px] text-auditor-500 uppercase tracking-wider mb-2 font-semibold flex items-center gap-2">
-            <Crosshair className="w-3 h-3" />
-            Target Agent
-          </div>
-          <div className="grid grid-cols-4 gap-2.5 mb-4">
-            {VICTIM_TYPES.map(v => {
-              const Icon = v.icon;
-              const active = victimType === v.id;
-              return (
-                <button
-                  key={v.id}
-                  onClick={() => setVictimType(v.id)}
-                  className={`p-3 rounded-lg border text-left transition-all duration-150 group ${
-                    active
-                      ? 'glass border-neon-green/30 glow-green'
-                      : 'glass hover:border-auditor-500'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className={`p-1 rounded ${active ? 'bg-neon-green/15' : 'bg-auditor-700/50'}`}>
-                      <Icon className={`w-3.5 h-3.5 ${active ? 'text-neon-green' : 'text-auditor-500 group-hover:text-auditor-300'}`} />
-                    </div>
-                    <span className={`text-xs font-bold ${active ? 'text-neon-green' : 'text-auditor-200'}`}>{v.name}</span>
+        <div className="grid w-full max-w-6xl gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <section className="warm-panel rounded-xl p-5">
+            <div className="mb-5 flex items-center justify-between border-b lab-rule pb-4">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-auditor-400">Target dossier</div>
+              <div className="text-[11px] text-auditor-500">1 scenario quick audit</div>
+            </div>
+
+            <div className="grid gap-5">
+              <div className="min-w-0">
+                <div className="mb-2 inline-flex rounded border border-[#d59a66]/30 bg-[#d59a66]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#d59a66]">
+                  {selectedVictim.risk}
+                </div>
+                <div className="flex items-center gap-3">
+                  <SelectedIcon className="h-7 w-7 text-[#d59a66]" />
+                  <h2 className="font-display text-3xl text-auditor-100">{selectedVictim.name}</h2>
+                </div>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-auditor-400">{selectedVictim.desc}</p>
+
+                <div className="mt-5 grid gap-3 text-xs text-auditor-400 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-auditor-600">Endpoint</div>
+                    <div className="mt-1 truncate font-mono text-auditor-300">{targetUrl}</div>
                   </div>
-                  <div className="text-[10px] text-auditor-500 leading-snug mb-1.5">{v.desc}</div>
-                  <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-full ${
-                    v.risk === 'Critical Risk' ? 'bg-red-500/10 text-red-400 border border-red-500/20'
-                    : v.risk === 'High Risk' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
-                    : v.risk === 'Low Risk' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                    : 'bg-auditor-700/50 text-auditor-500 border border-auditor-600'
-                  }`}>
-                    {v.risk}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {isCustom && (
-            <input
-              type="text"
-              value={customUrl}
-              onChange={e => setCustomUrl(e.target.value)}
-              className="w-full glass rounded-lg px-3 py-2 text-xs text-auditor-200 font-mono placeholder-auditor-500 focus:outline-none focus:border-neon-green/40 mb-3 transition-colors"
-              placeholder="https://your-agent-endpoint/chat"
-            />
-          )}
-
-          <div className="flex gap-2.5">
-            <button onClick={runAudit} className="btn-primary flex-1 flex items-center justify-center gap-2 text-xs py-2.5">
-              <Play className="w-3.5 h-3.5" />
-              Launch Audit
-            </button>
-            <button
-              onClick={startBenchmark}
-              disabled={running || benchmarkRunning}
-              className="px-4 py-2.5 rounded-lg text-xs font-semibold border backdrop-blur-sm transition-all duration-200
-                bg-neon-blue/10 border-neon-blue/30 text-neon-blue hover:bg-neon-blue/20
-                disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <Activity className="w-3.5 h-3.5" />
-              Benchmark All
-            </button>
-          </div>
-
-          {/* Info strip */}
-          <div className="mt-auto pt-6 grid grid-cols-4 gap-3">
-            {[
-              { label: 'Attack Categories', value: '10', desc: 'OWASP-mapped vectors' },
-              { label: 'Probe Requests', value: '8', desc: 'Surface reconnaissance' },
-              { label: 'Judge Model', value: 'Gemini', desc: 'LLM-as-judge scoring' },
-              { label: 'Multi-Turn', value: '4 turns', desc: 'Context exploitation' },
-            ].map((stat, i) => (
-              <div key={i} className="glass rounded-lg p-3 text-center">
-                <div className="text-sm font-bold text-auditor-200">{stat.value}</div>
-                <div className="text-[10px] font-semibold text-auditor-400">{stat.label}</div>
-                <div className="text-[8px] text-auditor-600">{stat.desc}</div>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-auditor-600">Audit path</div>
+                    <div className="mt-1 text-auditor-300">Recon, adaptive attack, LLM judge</div>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
+
+            <div className="mt-5 border-t lab-rule pt-4">
+              <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-auditor-500">
+                <Crosshair className="h-3 w-3" />
+                Select target
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                {VICTIM_TYPES.map(v => {
+                  const Icon = v.icon;
+                  const active = victimType === v.id;
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => setVictimType(v.id)}
+                      className={`rounded-lg border p-3 text-left transition-all duration-150 group ${
+                        active
+                          ? 'border-[#d59a66]/70 bg-[#d59a66]/10'
+                          : 'border-auditor-600/45 bg-auditor-900/35 hover:border-auditor-500/70 hover:bg-auditor-800/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon className={`h-4 w-4 ${active ? 'text-[#d59a66]' : 'text-auditor-500 group-hover:text-auditor-300'}`} />
+                        <span className="text-xs font-semibold text-auditor-200">{v.name}</span>
+                      </div>
+                      <div className="mt-1 text-[10px] text-auditor-500">{v.risk}</div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {isCustom && (
+                <input
+                  type="text"
+                  value={customUrl}
+                  onChange={e => setCustomUrl(e.target.value)}
+                  className="mt-3 w-full rounded-lg border border-auditor-600/60 bg-auditor-950/50 px-3 py-2 text-xs text-auditor-200 font-mono placeholder-auditor-500 focus:outline-none focus:border-[#d59a66]/50 transition-colors"
+                  placeholder="https://your-agent-endpoint/chat"
+                />
+              )}
+
+              <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_260px]">
+                <button onClick={runAudit} className="btn-primary flex items-center justify-center gap-2 text-sm py-3">
+                  <Play className="w-4 h-4" />
+                  Launch Audit
+                </button>
+                <button
+                  onClick={startBenchmark}
+                  disabled={running || benchmarkRunning}
+                  className="flex items-center justify-center gap-2 rounded-lg border border-auditor-600/70 bg-auditor-900/50 px-4 py-3 text-sm font-semibold text-auditor-200 transition-colors hover:bg-auditor-800/70 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Activity className="w-4 h-4" />
+                  Benchmark All
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <aside className="warm-panel rounded-xl p-5">
+            <div className="border-b lab-rule pb-4">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-auditor-400">Audit brief</div>
+              <p className="mt-3 text-sm leading-relaxed text-auditor-300">Compact red-team run against the selected agent.</p>
+            </div>
+
+            <div className="space-y-2 py-4 text-sm">
+              {[
+                ['recon', '8 probes map exposed tools and weak validation'],
+                ['attack', '1 adaptive Gemini scenario'],
+                ['judge', 'LLM score, OWASP class, remediation'],
+                ['trace', 'Phoenix spans and eval annotations'],
+              ].map(([label, detail]) => (
+                <div key={label} className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 rounded-lg border border-auditor-600/35 bg-auditor-900/25 px-3 py-2">
+                  <div className="font-mono text-[11px] text-[#d59a66]">{label}</div>
+                  <div className="text-xs leading-relaxed text-auditor-400">{detail}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t lab-rule pt-4">
+              <div className="font-mono text-xs leading-relaxed text-auditor-400">
+                <div><span className="text-auditor-600">$</span> audit --target {victimType}</div>
+                <div><span className="text-auditor-600">$</span> report --format pdf,json</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <div className="mt-4 grid w-full max-w-6xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            ['stream', 'SSE progress, attack console, live findings'],
+            ['score', 'LLM judge verdict and risk score'],
+            ['map', 'OWASP LLM Top 10 classification'],
+            ['export', 'PDF and JSON reports after completion'],
+          ].map(([label, detail]) => (
+            <div key={label} className="rounded-lg border border-auditor-600/35 bg-auditor-900/25 px-3 py-3">
+              <div className="font-mono text-[11px] text-[#d59a66]">{label}</div>
+              <div className="mt-1 text-xs leading-relaxed text-auditor-400">{detail}</div>
+            </div>
+          ))}
         </div>
       </div>
     );

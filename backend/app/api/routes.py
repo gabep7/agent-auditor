@@ -405,10 +405,14 @@ async def start_audit(request: AuditRequest):
 
                     if _attack_gen_client is not None:
                         try:
-                            resp = _attack_gen_client.models.generate_content(
-                                model="gemini-2.5-flash",
-                                contents=[{"role": "user", "parts": [{"text": attacker_prompt}]}],
-                                config={"temperature": 0.7, "response_mime_type": "application/json"},
+                            resp = await asyncio.wait_for(
+                                asyncio.to_thread(
+                                    _attack_gen_client.models.generate_content,
+                                    model="gemini-2.5-flash",
+                                    contents=[{"role": "user", "parts": [{"text": attacker_prompt}]}],
+                                    config={"temperature": 0.7, "response_mime_type": "application/json"},
+                                ),
+                                timeout=25,
                             )
                             raw = (getattr(resp, "text", "") or "").strip()
                             data = json.loads(raw)
