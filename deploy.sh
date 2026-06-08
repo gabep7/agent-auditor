@@ -26,6 +26,7 @@ gcloud run deploy "${SERVICE_NAME}" \
   --allow-unauthenticated \
   --memory=2Gi \
   --cpu=2 \
+  --max-instances=1 \
   --timeout=300 \
   --set-env-vars="GOOGLE_API_KEY=${GOOGLE_API_KEY:?Set GOOGLE_API_KEY}" \
   --set-env-vars="PHOENIX_COLLECTOR_ENDPOINT=${PHOENIX_COLLECTOR_ENDPOINT:-}" \

@@ -4,6 +4,15 @@ Adversarial red-team testing for AI agents. Finds vulnerabilities before attacke
 
 Google Cloud Rapid Agent Hackathon, Arize Track.
 
+Live demo: https://agent-auditor-btmt64se2a-uc.a.run.app
+
+## Judge quick path
+
+1. Open the deployed app and click **Benchmark All** to compare the vulnerable baseline agents against the ADK enterprise agent.
+2. Select **Enterprise Support** and click **Launch Audit** to watch reconnaissance, adaptive adversarial scenarios, LLM judging, remediation, and OWASP mapping stream live.
+3. Open **Reports** to review persisted audits, radar charts, findings, and downloadable PDF/JSON reports.
+4. Open Phoenix Cloud to inspect OpenInference traces and confirm the Phoenix MCP/self-improvement loop.
+
 ## What it does
 
 Agent Auditor is a security testing system for AI agents. Point it at any agent endpoint and it will:
