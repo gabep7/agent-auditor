@@ -118,6 +118,12 @@ export async function getAuditRules(auditId) {
   return res.json();
 }
 
+export async function getAuditOwasp(auditId) {
+  const res = await fetch(`${BASE}/audit/${auditId}/owasp`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 export async function listVictims() {
   const res = await fetch(`${BASE}/victims`);
   if (!res.ok) throw new Error(await res.text());

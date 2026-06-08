@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { FileText, AlertTriangle, Clock, ChevronRight, Download, BarChart3, TrendingUp } from 'lucide-react';
-import { listAudits } from '../lib/api';
+import { FileText, AlertTriangle, Clock, ChevronRight, ChevronDown, Download, BarChart3, TrendingUp, Shield } from 'lucide-react';
+import { listAudits, getAudit } from '../lib/api';
 import ScoreRing from '../components/ScoreRing';
+import RadarChart from '../components/RadarChart';
+import AttackTimeline from '../components/AttackTimeline';
 
 const API_BASE = window.location.port === '5173'
   ? `${window.location.protocol}//${window.location.hostname}:8000/api`
@@ -80,6 +82,9 @@ export default function ReportPage({ active = true }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshIndex, setRefreshIndex] = useState(0);
+  const [expandedId, setExpandedId] = useState(null);
+  const [detailData, setDetailData] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     if (!active) return;
@@ -181,65 +186,141 @@ export default function ReportPage({ active = true }) {
       <div className="space-y-3">
         {audits.map((audit, i) => {
           const score = audit.score || 0;
-          return (
-            <div
-              key={audit.id}
-              className="glass rounded-xl p-5 hover:border-auditor-500/50 transition-all duration-200 animate-slide-up group"
-              style={{ animationDelay: `${i * 80}ms` }}
-            >
-              <div className="flex items-center gap-5">
-                {/* Score ring (small) */}
-                <div className="flex-shrink-0">
-                  <ScoreRing score={score} size={72} strokeWidth={5} label="" />
-                </div>
+          const isExpanded = expandedId === audit.id;
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold text-auditor-200">{audit.agent}</span>
-                    <span className="text-[9px] text-auditor-600 font-mono">#{audit.id}</span>
+          function toggleExpand() {
+            if (isExpanded) {
+              setExpandedId(null);
+              setDetailData(null);
+              return;
+            }
+            setExpandedId(audit.id);
+            setDetailLoading(true);
+            getAudit(audit.id)
+              .then(setDetailData)
+              .catch(console.error)
+              .finally(() => setDetailLoading(false));
+          }
+
+          return (
+            <div key={audit.id}>
+              <div
+                onClick={toggleExpand}
+                className={`glass rounded-xl p-5 hover:border-auditor-500/50 transition-all duration-200 animate-slide-up group cursor-pointer ${
+                  isExpanded ? 'border-neon-green/30' : ''
+                }`}
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <div className="flex items-center gap-5">
+                  <div className="flex-shrink-0">
+                    <ScoreRing score={score} size={72} strokeWidth={5} label="" />
                   </div>
-                  <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1.5 text-neon-red">
-                      <AlertTriangle className="w-3 h-3" />
-                      <span className="font-semibold">{audit.vulnerabilities}</span>
-                      <span className="text-auditor-500">vulnerabilities</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-bold text-auditor-200">{audit.agent}</span>
+                      <span className="text-[9px] text-auditor-600 font-mono">#{audit.id}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-auditor-400">
-                      <Clock className="w-3 h-3" />
-                      {audit.completed ? new Date(audit.completed).toLocaleDateString() : 'In progress'}
+                    <div className="flex items-center gap-4 text-xs">
+                      <div className="flex items-center gap-1.5 text-neon-red">
+                        <AlertTriangle className="w-3 h-3" />
+                        <span className="font-semibold">{audit.vulnerabilities}</span>
+                        <span className="text-auditor-500">vulnerabilities</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-auditor-400">
+                        <Clock className="w-3 h-3" />
+                        {audit.completed ? new Date(audit.completed).toLocaleDateString() : 'In progress'}
+                      </div>
                     </div>
+                    {audit.completed && (
+                      <div className="flex items-center gap-1 mt-1.5">
+                        <a
+                          href={`${API_BASE}/audit/${audit.id}/pdf`}
+                          download
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-medium
+                            bg-neon-blue/10 border border-neon-blue/30 text-neon-blue hover:bg-neon-blue/20 transition-colors"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <Download className="w-2.5 h-2.5" />
+                          PDF
+                        </a>
+                        <a
+                          href={`${API_BASE}/audit/${audit.id}/export`}
+                          download
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-medium
+                            bg-auditor-700/50 border border-auditor-600 text-auditor-400 hover:bg-auditor-600/50 transition-colors"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <Download className="w-2.5 h-2.5" />
+                          JSON
+                        </a>
+                      </div>
+                    )}
                   </div>
-                  {/* Download buttons */}
-                  {audit.completed && (
-                    <div className="flex items-center gap-1 mt-1.5">
-                      <a
-                        href={`${API_BASE}/audit/${audit.id}/pdf`}
-                        download
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-medium
-                          bg-neon-blue/10 border border-neon-blue/30 text-neon-blue hover:bg-neon-blue/20 transition-colors"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <Download className="w-2.5 h-2.5" />
-                        PDF
-                      </a>
-                      <a
-                        href={`${API_BASE}/audit/${audit.id}/export`}
-                        download
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-medium
-                          bg-auditor-700/50 border border-auditor-600 text-auditor-400 hover:bg-auditor-600/50 transition-colors"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <Download className="w-2.5 h-2.5" />
-                        JSON
-                      </a>
+                  {isExpanded
+                    ? <ChevronDown className="w-4 h-4 text-neon-green" />
+                    : <ChevronRight className="w-4 h-4 text-auditor-600 group-hover:text-auditor-400 transition-colors" />
+                  }
+                </div>
+              </div>
+
+              {/* Detail panel */}
+              {isExpanded && (
+                <div className="mt-2 glass rounded-xl p-4 animate-fade-in border-l-2 border-neon-green/30">
+                  {detailLoading ? (
+                    <div className="text-xs text-auditor-500 py-4 text-center">Loading details...</div>
+                  ) : detailData ? (
+                    <div className="space-y-4">
+                      {/* Summary row */}
+                      <div className="flex items-start gap-6">
+                        {detailData.category_scores && Object.keys(detailData.category_scores).length > 0 && (
+                          <RadarChart scores={detailData.category_scores} size={150} />
+                        )}
+                        <div className="flex-1">
+                          <div className="text-[10px] text-auditor-500 uppercase tracking-wider mb-2 font-semibold">Audit Summary</div>
+                          <div className="grid grid-cols-3 gap-3 mb-3">
+                            <div className="glass rounded-lg p-2 text-center">
+                              <div className="text-lg font-bold text-neon-green">{detailData.overall_score || 0}</div>
+                              <div className="text-[9px] text-auditor-500">Score</div>
+                            </div>
+                            <div className="glass rounded-lg p-2 text-center">
+                              <div className="text-lg font-bold text-neon-red">{detailData.vulnerabilities_found || 0}</div>
+                              <div className="text-[9px] text-auditor-500">Vulnerabilities</div>
+                            </div>
+                            <div className="glass rounded-lg p-2 text-center">
+                              <div className="text-lg font-bold text-auditor-200">{detailData.scenarios_run || 0}</div>
+                              <div className="text-[9px] text-auditor-500">Scenarios</div>
+                            </div>
+                          </div>
+                          {detailData.critical_findings && detailData.critical_findings.length > 0 && (
+                            <div>
+                              <div className="text-[10px] text-neon-red font-semibold mb-1">Critical Findings</div>
+                              {detailData.critical_findings.slice(0, 3).map((f, j) => (
+                                <div key={j} className="text-[10px] text-auditor-400 leading-relaxed">{f}</div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Scenario list */}
+                      {detailData.scenarios && detailData.scenarios.length > 0 && (
+                        <div>
+                          <div className="text-[10px] text-auditor-500 uppercase tracking-wider mb-2 font-semibold">
+                            Scenarios ({detailData.scenarios.length})
+                          </div>
+                          <div className="space-y-2 max-h-80 overflow-y-auto">
+                            {detailData.scenarios.map((s, j) => (
+                              <AttackTimeline key={j} scenario={s} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
+                  ) : (
+                    <div className="text-xs text-auditor-500 py-4 text-center">No details available</div>
                   )}
                 </div>
-
-                {/* Arrow */}
-                <ChevronRight className="w-4 h-4 text-auditor-600 group-hover:text-auditor-400 transition-colors" />
-              </div>
+              )}
             </div>
           );
         })}

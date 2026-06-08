@@ -17,9 +17,10 @@
   --color-neon-blue: #4488ff;
   --color-neon-purple: #8b5cf6;
   --color-neon-cyan: #00ddff;
+  --color-neon-orange: #ff8844;
 }
 
-/* ─── Base ────────────────────────────────────────────────── */
+/* --- Base -------------------------------------------------- */
 
 body {
   background: var(--color-auditor-950);
@@ -32,14 +33,14 @@ code, .font-mono, pre {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-/* ─── Scrollbar ───────────────────────────────────────────── */
+/* --- Scrollbar --------------------------------------------- */
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.2); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.35); }
 
-/* ─── Glass panels ────────────────────────────────────────── */
+/* --- Glass panels ------------------------------------------ */
 
 .glass {
   background: rgba(17, 24, 39, 0.6);
@@ -55,7 +56,7 @@ code, .font-mono, pre {
   border: 1px solid rgba(51, 65, 85, 0.6);
 }
 
-/* ─── Animations ──────────────────────────────────────────── */
+/* --- Animations -------------------------------------------- */
 
 @keyframes blink {
   0%, 100% { opacity: 1; }
@@ -110,7 +111,7 @@ code, .font-mono, pre {
   animation: shimmer 2s linear infinite;
 }
 
-/* ─── Scan line overlay ───────────────────────────────────── */
+/* --- Scan line overlay ------------------------------------- */
 
 .scan-line {
   position: relative;
@@ -125,7 +126,7 @@ code, .font-mono, pre {
   animation: scan-line 4s linear infinite;
 }
 
-/* ─── Grid background ─────────────────────────────────────── */
+/* --- Grid background --------------------------------------- */
 
 .grid-bg {
   background-image:
@@ -134,7 +135,7 @@ code, .font-mono, pre {
   background-size: 40px 40px;
 }
 
-/* ─── Glow effects ────────────────────────────────────────── */
+/* --- Glow effects ------------------------------------------ */
 
 .glow-green { box-shadow: 0 0 20px rgba(0, 255, 136, 0.2), inset 0 0 20px rgba(0, 255, 136, 0.05); }
 .glow-red { box-shadow: 0 0 20px rgba(255, 68, 102, 0.2), inset 0 0 20px rgba(255, 68, 102, 0.05); }
@@ -143,7 +144,7 @@ code, .font-mono, pre {
 .text-glow-green { text-shadow: 0 0 20px rgba(0, 255, 136, 0.5); }
 .text-glow-red { text-shadow: 0 0 20px rgba(255, 68, 102, 0.5); }
 
-/* ─── Gradient borders ────────────────────────────────────── */
+/* --- Gradient borders -------------------------------------- */
 
 .gradient-border {
   position: relative;
@@ -162,7 +163,7 @@ code, .font-mono, pre {
   pointer-events: none;
 }
 
-/* ─── Button styles ───────────────────────────────────────── */
+/* --- Button styles ----------------------------------------- */
 
 .btn-primary {
   background: linear-gradient(135deg, #00ff88, #00cc6a);

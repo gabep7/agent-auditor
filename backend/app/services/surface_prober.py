@@ -21,7 +21,7 @@ from typing import Optional
 import httpx
 
 
-# ── Probe templates ─────────────────────────────────────────────────────
+# -- Probe templates -----------------------------------------------------
 
 _PROBES = [
     # 1. Baseline — does the agent greet politely?

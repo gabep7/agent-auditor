@@ -11,6 +11,8 @@ services:
       - PHOENIX_COLLECTOR_ENDPOINT=${PHOENIX_COLLECTOR_ENDPOINT}
       - PHOENIX_API_KEY=${PHOENIX_API_KEY}
       - PHOENIX_PROJECT_NAME=${PHOENIX_PROJECT_NAME:-agent-auditor}
+      - ELASTIC_ENDPOINT=${ELASTIC_ENDPOINT:-}
+      - ELASTIC_API_KEY=${ELASTIC_API_KEY:-}
     restart: unless-stopped
 
   frontend:

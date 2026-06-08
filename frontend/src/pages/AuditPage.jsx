@@ -4,7 +4,7 @@ import {
   Activity, Zap, Target, Globe, Building, ExternalLink, Brain,
   ShieldAlert, Crosshair, Download,
 } from 'lucide-react';
-import { streamAudit, runBenchmark, getAuditRules } from '../lib/api';
+import { streamAudit, runBenchmark, getAuditRules, getAuditOwasp } from '../lib/api';
 import RadarChart from '../components/RadarChart';
 import ScoreRing from '../components/ScoreRing';
 import RuleHeatmap from '../components/RuleHeatmap';
@@ -31,6 +31,8 @@ export default function AuditPage() {
   const [benchmarkRunning, setBenchmarkRunning] = useState(false);
   const [ruleData, setRuleData] = useState(null);
   const [ruleLoading, setRuleLoading] = useState(false);
+  const [owaspData, setOwaspData] = useState(null);
+  const [owaspLoading, setOwaspLoading] = useState(false);
   const logRef = useRef(null);
 
   const isCustom = victimType === 'custom';
@@ -52,22 +54,22 @@ export default function AuditPage() {
     setReport(null);
     setProgress({ current: 0, total: 0, message: '' });
 
-    addLog('system', '🚀 Agent Auditor initialized');
-    addLog('system', `🎯 Target: ${victimType} (${targetUrl})`);
+    addLog('system', 'Agent Auditor initialized');
+    addLog('system', `Target: ${victimType} (${targetUrl})`);
 
     const ctrl = streamAudit(targetUrl, victimType, 6, {
       onProgress(data) {
         if (data.step === 'register' || data.step === 'registered' || data.step === 'generating' || data.step === 'generated') {
           addLog('system', data.message);
         } else if (data.step === 'introspecting' || data.step === 'introspected') {
-          addLog('info', `🧠 ${data.message}`);
+          addLog('info', `${data.message}`);
         } else if (data.step === 'attacker_ready') {
-          addLog('attack', `⚔️ ${data.message}`);
+          addLog('attack', `${data.message}`);
         } else if (data.step === 'executing') {
           setProgress({ current: data.current, total: data.total, message: data.message });
           addLog('attack', data.message);
         } else if (data.step === 'finalizing') {
-          addLog('system', `📊 ${data.message}`);
+          addLog('system', `${data.message}`);
         } else {
           addLog('system', data.message);
         }
@@ -75,9 +77,9 @@ export default function AuditPage() {
       onScenario(data) {
         setScenarioResults(prev => [...prev, data]);
         if (data.vulnerability_found) {
-          addLog('warning', `  🔴 VULNERABLE — ${data.name}`);
+          addLog('warning', `  vulnerable - ${data.name}`);
         } else {
-          addLog('success', `  🟢 Safe — ${data.name}`);
+          addLog('success', `  safe - ${data.name}`);
         }
       },
       onComplete(data) {
@@ -85,10 +87,10 @@ export default function AuditPage() {
         setComplete(true);
         setRunning(false);
         addLog('system', '');
-        addLog('success', `════════════════════════════════`);
+        addLog('success', `================================`);
         addLog('success', `  AUDIT COMPLETE`);
         addLog('success', `  Score: ${data.overall_score}/100 | Vulnerabilities: ${data.vulnerabilities_found}/${data.scenarios_run}`);
-        addLog('success', `════════════════════════════════`);
+        addLog('success', `================================`);
         // Fetch rule analysis for enterprise victim audits
         if (victimType === 'enterprise_support' && data.audit_id) {
           setRuleLoading(true);
@@ -97,9 +99,17 @@ export default function AuditPage() {
             .catch(console.error)
             .finally(() => setRuleLoading(false));
         }
+        // Fetch OWASP mapping for all audits
+        if (data.audit_id) {
+          setOwaspLoading(true);
+          getAuditOwasp(data.audit_id)
+            .then(setOwaspData)
+            .catch(console.error)
+            .finally(() => setOwaspLoading(false));
+        }
       },
       onError(err) {
-        addLog('error', `❌ Audit failed: ${err.message}`);
+        addLog('error', `Audit failed: ${err.message}`);
         setRunning(false);
       },
     });
@@ -112,7 +122,7 @@ export default function AuditPage() {
     setBenchmarkResults(null);
     setLog([]);
 
-    addLog('system', '🏆 Security Benchmark starting...');
+    addLog('system', 'Security benchmark starting...');
     addLog('system', 'Testing: Customer Support, Banking, Enterprise Support\n');
 
     const ctrl = runBenchmark({
@@ -121,7 +131,7 @@ export default function AuditPage() {
       onProgress(data) {
         if (data.step === 'benchmark_start') {
           setProgress({ current: 0, total: data.total_tests || 18, message: data.message });
-          addLog('system', `📊 ${data.message}`);
+          addLog('system', `${data.message}`);
         } else if (data.step === 'executing') {
           setProgress({
             current: data.current || 0,
@@ -135,17 +145,17 @@ export default function AuditPage() {
         setBenchmarkResults(data);
         setBenchmarkRunning(false);
         addLog('system', '');
-        addLog('success', '════════════════════════════════');
+        addLog('success', '================================');
         addLog('success', '  BENCHMARK COMPLETE');
         data.comparison.forEach(v => {
-          const icon = v.overall_score >= 70 ? '🟢' : v.overall_score >= 40 ? '🟡' : '🔴';
-          addLog('success', `  ${icon} ${v.victim_name}: ${v.overall_score}/100 (${v.vulnerabilities} vulnerabilities)`);
+          const label = v.overall_score >= 70 ? 'pass' : v.overall_score >= 40 ? 'warn' : 'fail';
+          addLog('success', `  ${label} ${v.victim_name}: ${v.overall_score}/100 (${v.vulnerabilities} vulnerabilities)`);
         });
-        addLog('success', `  🏆 Winner: ${data.winner.victim_name} with ${data.winner.overall_score}/100`);
-        addLog('success', '════════════════════════════════');
+        addLog('success', `  winner: ${data.winner.victim_name} with ${data.winner.overall_score}/100`);
+        addLog('success', '================================');
       },
       onError(err) {
-        addLog('error', `❌ Benchmark failed: ${err.message}`);
+        addLog('error', `Benchmark failed: ${err.message}`);
         setBenchmarkRunning(false);
       },
     });
@@ -158,7 +168,7 @@ export default function AuditPage() {
       controller.abort();
       setRunning(false);
       setBenchmarkRunning(false);
-      addLog('error', '⛔ Operation cancelled by user');
+      addLog('error', 'Operation cancelled by user');
     }
   }
 
@@ -171,6 +181,8 @@ export default function AuditPage() {
     setReport(null);
     setRuleData(null);
     setRuleLoading(false);
+    setOwaspData(null);
+    setOwaspLoading(false);
     setProgress({ current: 0, total: 0, message: '' });
     setLog([]);
   }
@@ -182,32 +194,26 @@ export default function AuditPage() {
   const vulnCount = scenarioResults.filter(s => s.vulnerability_found).length;
   const safeCount = scenarioResults.filter(s => !s.vulnerability_found).length;
 
-  // ─── HERO STATE (before audit) ─────────────────────────────
+  // Hero state (before audit)
 
   if (!running && !benchmarkRunning && !complete && scenarioResults.length === 0) {
     return (
       <div className="h-full flex flex-col max-h-[calc(100vh-3rem)] animate-fade-in">
-        {/* Hero section */}
-        <div className="text-center py-8">
-          <div className="inline-flex p-4 rounded-2xl bg-neon-green/5 border border-neon-green/10 mb-4 animate-float">
-            <Shield className="w-12 h-12 text-neon-green" />
-          </div>
-          <h1 className="text-3xl font-extrabold text-auditor-100 mb-2 tracking-tight">
+        {/* Compact header */}
+        <div className="mb-6">
+          <h1 className="text-xl font-extrabold text-auditor-100 tracking-tight">
             Agent <span className="text-neon-green text-glow-green">Auditor</span>
           </h1>
-          <p className="text-sm text-auditor-400 max-w-md mx-auto leading-relaxed">
-            Adversarial red-team testing for AI agents. Find vulnerabilities before attackers do.
-            Powered by Gemini LLM-as-judge and Arize Phoenix tracing.
-          </p>
+          <p className="text-xs text-auditor-500 mt-1">Select a target and launch an adversarial audit powered by Gemini LLM-as-judge.</p>
         </div>
 
         {/* Target selector */}
-        <div className="max-w-2xl mx-auto w-full">
-          <div className="text-xs text-auditor-500 uppercase tracking-wider mb-3 font-semibold flex items-center gap-2">
-            <Crosshair className="w-3.5 h-3.5" />
-            Select Target Agent
+        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
+          <div className="text-[10px] text-auditor-500 uppercase tracking-wider mb-2 font-semibold flex items-center gap-2">
+            <Crosshair className="w-3 h-3" />
+            Target Agent
           </div>
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-4 gap-2.5 mb-4">
             {VICTIM_TYPES.map(v => {
               const Icon = v.icon;
               const active = victimType === v.id;
@@ -215,20 +221,20 @@ export default function AuditPage() {
                 <button
                   key={v.id}
                   onClick={() => setVictimType(v.id)}
-                  className={`p-4 rounded-xl border text-left transition-all duration-200 group ${
+                  className={`p-3 rounded-lg border text-left transition-all duration-150 group ${
                     active
                       ? 'glass border-neon-green/30 glow-green'
                       : 'glass hover:border-auditor-500'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 mb-1.5">
-                    <div className={`p-1.5 rounded-lg ${active ? 'bg-neon-green/15' : 'bg-auditor-700/50'}`}>
-                      <Icon className={`w-4 h-4 ${active ? 'text-neon-green' : 'text-auditor-500 group-hover:text-auditor-300'}`} />
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className={`p-1 rounded ${active ? 'bg-neon-green/15' : 'bg-auditor-700/50'}`}>
+                      <Icon className={`w-3.5 h-3.5 ${active ? 'text-neon-green' : 'text-auditor-500 group-hover:text-auditor-300'}`} />
                     </div>
-                    <span className={`text-sm font-bold ${active ? 'text-neon-green' : 'text-auditor-200'}`}>{v.name}</span>
+                    <span className={`text-xs font-bold ${active ? 'text-neon-green' : 'text-auditor-200'}`}>{v.name}</span>
                   </div>
-                  <div className="text-[11px] text-auditor-500 leading-relaxed mb-2">{v.desc}</div>
-                  <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
+                  <div className="text-[10px] text-auditor-500 leading-snug mb-1.5">{v.desc}</div>
+                  <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-full ${
                     v.risk === 'Critical Risk' ? 'bg-red-500/10 text-red-400 border border-red-500/20'
                     : v.risk === 'High Risk' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
                     : v.risk === 'Low Risk' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
@@ -246,36 +252,49 @@ export default function AuditPage() {
               type="text"
               value={customUrl}
               onChange={e => setCustomUrl(e.target.value)}
-              className="w-full glass rounded-xl px-4 py-3 text-sm text-auditor-200 font-mono placeholder-auditor-500 focus:outline-none focus:border-neon-green/40 mb-4 transition-colors"
+              className="w-full glass rounded-lg px-3 py-2 text-xs text-auditor-200 font-mono placeholder-auditor-500 focus:outline-none focus:border-neon-green/40 mb-3 transition-colors"
               placeholder="https://your-agent-endpoint/chat"
             />
           )}
 
-          <div className="flex gap-3">
-            <button onClick={runAudit} className="btn-primary flex-1 flex items-center justify-center gap-2 text-sm py-3">
-              <Play className="w-4 h-4" />
-              Launch Audit — 6 Scenarios
+          <div className="flex gap-2.5">
+            <button onClick={runAudit} className="btn-primary flex-1 flex items-center justify-center gap-2 text-xs py-2.5">
+              <Play className="w-3.5 h-3.5" />
+              Launch Audit
             </button>
             <button
               onClick={startBenchmark}
               disabled={running || benchmarkRunning}
-              className="px-4 py-3 rounded-xl text-sm font-semibold border backdrop-blur-sm transition-all duration-200
+              className="px-4 py-2.5 rounded-lg text-xs font-semibold border backdrop-blur-sm transition-all duration-200
                 bg-neon-blue/10 border-neon-blue/30 text-neon-blue hover:bg-neon-blue/20
                 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <Activity className="w-4 h-4" />
-              Benchmark All — 9 Tests
+              <Activity className="w-3.5 h-3.5" />
+              Benchmark All
             </button>
           </div>
-          <p className="mt-3 text-[10px] text-auditor-500 leading-relaxed">
-            Demo preset: runs fewer scenarios to keep latency and cloud/API usage low. The backend supports larger audits for production runs.
-          </p>
+
+          {/* Info strip */}
+          <div className="mt-auto pt-6 grid grid-cols-4 gap-3">
+            {[
+              { label: 'Attack Categories', value: '10', desc: 'OWASP-mapped vectors' },
+              { label: 'Probe Requests', value: '8', desc: 'Surface reconnaissance' },
+              { label: 'Judge Model', value: 'Gemini', desc: 'LLM-as-judge scoring' },
+              { label: 'Multi-Turn', value: '4 turns', desc: 'Context exploitation' },
+            ].map((stat, i) => (
+              <div key={i} className="glass rounded-lg p-3 text-center">
+                <div className="text-sm font-bold text-auditor-200">{stat.value}</div>
+                <div className="text-[10px] font-semibold text-auditor-400">{stat.label}</div>
+                <div className="text-[8px] text-auditor-600">{stat.desc}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
-  // ─── BENCHMARK RESULTS ─────────────────────────────────────
+  // Benchmark results
 
   if (benchmarkResults && benchmarkResults.comparison) {
     return (
@@ -290,7 +309,7 @@ export default function AuditPage() {
           </div>
           <div className="ml-auto flex items-center gap-2">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-neon-green/10 border border-neon-green/20">
-              <span className="text-[10px] text-neon-green font-semibold">🏆 {benchmarkResults.winner?.victim_name}</span>
+              <span className="text-[10px] text-neon-green font-semibold">{benchmarkResults.winner?.victim_name}</span>
             </div>
             <button
               onClick={resetAuditState}
@@ -313,7 +332,7 @@ export default function AuditPage() {
                 }`}
               >
                 {isWinner && (
-                  <div className="text-[9px] font-bold text-neon-green uppercase tracking-wider mb-2">🏆 Winner</div>
+                  <div className="text-[9px] font-bold text-neon-green uppercase tracking-wider mb-2">Winner</div>
                 )}
                 <ScoreRing score={score} size={96} strokeWidth={6} label="" />
                 <h3 className="text-sm font-bold text-auditor-200 mt-3">{v.victim_name}</h3>
@@ -359,7 +378,7 @@ export default function AuditPage() {
     );
   }
 
-  // ─── RUNNING / COMPLETE STATE ──────────────────────────────
+  // --- RUNNING / COMPLETE STATE ------------------------------
 
   return (
     <div className="h-full flex flex-col max-h-[calc(100vh-3rem)]">
@@ -512,6 +531,27 @@ export default function AuditPage() {
             {victimType === 'enterprise_support' && (
               <div className="flex-shrink-0 w-64">
                 <RuleHeatmap data={ruleData} loading={ruleLoading} />
+              </div>
+            )}
+
+            {/* OWASP LLM Top 10 mapping */}
+            {owaspData && owaspData.owasp_classes && owaspData.owasp_classes.length > 0 && (
+              <div className="flex-shrink-0 w-56">
+                <div className="text-[10px] text-auditor-500 uppercase tracking-wider mb-2 font-semibold">OWASP LLM Top 10</div>
+                <div className="space-y-1.5">
+                  {owaspData.owasp_classes.slice(0, 5).map((cls) => (
+                    <div key={cls.id} className="glass rounded-lg p-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold text-neon-red">{cls.id}</span>
+                        <span className="text-[9px] text-auditor-400">{cls.vulnerability_count} hits</span>
+                      </div>
+                      <div className="text-[9px] text-auditor-300 font-medium">{cls.name}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 text-[9px] text-auditor-500">
+                  {owaspData.classes_affected} OWASP classes affected
+                </div>
               </div>
             )}
 

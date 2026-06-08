@@ -1221,7 +1221,7 @@ export default function AuditPage() {
             ))}
             {running && (
               <div className="text-neon-green animate-blink">
-                <span className="text-auditor-600">[{new Date().toLocaleTimeString()}]</span> ▋
+                <span className="text-auditor-600">[{new Date().toLocaleTimeString()}]</span> |
               </div>
             )}
           </div>

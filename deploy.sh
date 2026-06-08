@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# ── Agent Auditor — Cloud Run Deployment Script ──────────────
+# Agent Auditor - Cloud Run deployment script
 # Prerequisites:
 #   1. gcloud CLI installed and authenticated
 #   2. A GCP project with Cloud Run, Artifact Registry, and Cloud Build enabled
@@ -11,14 +11,14 @@ PROJECT_ID="${GCP_PROJECT_ID:?Set GCP_PROJECT_ID}"
 REGION="${GCP_REGION:-us-central1}"
 SERVICE_NAME="agent-auditor"
 
-echo "═══════════════════════════════════════════"
+echo "=========================================="
 echo "  Agent Auditor — Cloud Run Deploy"
 echo "  Project: ${PROJECT_ID}"
 echo "  Region:  ${REGION}"
-echo "═══════════════════════════════════════════"
+echo "=========================================="
 
 # Build and deploy in one step (auto-detects Dockerfile.cloudrun)
-echo "🔨 Building and deploying to Cloud Run..."
+echo "Building and deploying to Cloud Run..."
 gcloud run deploy "${SERVICE_NAME}" \
   --project="${PROJECT_ID}" \
   --region="${REGION}" \
@@ -38,7 +38,7 @@ URL=$(gcloud run services describe "${SERVICE_NAME}" \
   --format='value(status.url)')
 
 echo ""
-echo "═══════════════════════════════════════════"
-echo "  ✅ Deployed successfully!"
-echo "  🌐 URL: ${URL}"
-echo "═══════════════════════════════════════════"
+echo "=========================================="
+echo "  Deployed successfully"
+echo "  URL: ${URL}"
+echo "=========================================="

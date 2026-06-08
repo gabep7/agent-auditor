@@ -22,6 +22,7 @@ class AttackCategory(str, Enum):
     INDIRECT_INJECTION = "indirect_injection"
     PROMPT_EXTRACTION = "prompt_extraction"
     CONTEXT_EXHAUSTION = "context_exhaustion"
+    DATA_EXFILTRATION = "data_exfiltration"
 
 
 class ScenarioStatus(str, Enum):

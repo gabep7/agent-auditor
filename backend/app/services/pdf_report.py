@@ -18,7 +18,7 @@ from app.models.schemas import AuditResult, Severity
 from app.services.rule_analysis import analyse_rule_violations
 
 
-# ── Colour palette ─────────────────────────────────────────────────────
+# -- Colour palette -----------------------------------------------------
 
 _COLORS = {
     "critical": (220, 38, 38),
@@ -180,7 +180,7 @@ class AuditPDF(FPDF):
         self.set_fill_color(*color)
         self.rect(self.get_x(), self.get_y(), w * min(max(pct, 0) / 100, 1), h, style="F")
 
-    # ── Cover page ────────────────────────────────────────────
+    # -- Cover page --------------------------------------------
 
     def render_cover(self):
         self.add_page()
@@ -242,7 +242,7 @@ class AuditPDF(FPDF):
             self._label_value("Best category:", f"{best_cat[0]}: {best_cat[1]}/100")
             self._label_value("Worst category:", f"{worst_cat[0]}: {worst_cat[1]}/100")
 
-    # ── Executive summary ─────────────────────────────────────
+    # -- Executive summary -------------------------------------
 
     def render_summary(self):
         self.add_page()
@@ -290,7 +290,7 @@ class AuditPDF(FPDF):
                 self.cell(28, 6, sev_label, align="R")
                 self.ln(7)
 
-    # ── Scenario details ──────────────────────────────────────
+    # -- Scenario details --------------------------------------
 
     def render_scenarios(self):
         self.add_page()
@@ -360,7 +360,7 @@ class AuditPDF(FPDF):
 
             self.ln(3)
 
-    # ── Rule analysis ─────────────────────────────────────────
+    # -- Rule analysis -----------------------------------------
 
     def render_rules(self):
         if not self.rule_data or not self.rule_data.get("rule_summary"):
@@ -412,7 +412,7 @@ class AuditPDF(FPDF):
         for r in self.rule_data.get("least_violated", []):
             self._body_text(f"{r['rule_id']}: {r['label']} — {int(r['rate'] * 100)}% violation rate")
 
-    # ── Remediation summary ───────────────────────────────────
+    # -- Remediation summary -----------------------------------
 
     def render_remediation_summary(self):
         vulns = [s for s in self.result.scenarios if s.vulnerability_found and s.remediation]
@@ -456,7 +456,7 @@ class AuditPDF(FPDF):
             self.multi_cell(0, 4, self._sanitize(s.remediation), border=1, fill=True)
             self.ln(4)
 
-    # ── Build full report ─────────────────────────────────────
+    # -- Build full report -------------------------------------
 
     def build(self) -> bytes:
         self.render_cover()

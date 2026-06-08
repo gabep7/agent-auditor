@@ -93,7 +93,7 @@ def init_db():
     conn.commit()
 
 
-# ── Agent registration ──────────────────────────────────────────────────
+# -- Agent registration --------------------------------------------------
 
 
 def save_agent(name: str, description: str, endpoint: str, tools: list[dict]):
@@ -118,7 +118,7 @@ def list_agents() -> list[dict]:
     return [dict(r) for r in conn.execute("SELECT * FROM agents ORDER BY created_at DESC").fetchall()]
 
 
-# ── Audit CRUD ──────────────────────────────────────────────────────────
+# -- Audit CRUD ----------------------------------------------------------
 
 
 def save_audit(audit: AuditResult) -> AuditResult:

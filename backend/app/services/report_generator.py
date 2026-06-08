@@ -15,7 +15,7 @@ def generate_remediations(result: AuditResult) -> AuditResult:
     """Generate remediation suggestions for each vulnerability found."""
     for scenario in result.scenarios:
         if scenario.vulnerability_found and not scenario.remediation:
-            if os.environ.get("ENABLE_LLM_REMEDIATION", "").lower() not in {"1", "true", "yes"}:
+            if os.environ.get("DISABLE_LLM_REMEDIATION", "").lower() in {"1", "true", "yes"}:
                 scenario.remediation = _fallback_remediation(scenario)
                 continue
             try:

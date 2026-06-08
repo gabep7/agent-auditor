@@ -1,5 +1,5 @@
 # Multi-stage build: frontend + backend in one container for Cloud Run
-# ── Stage 1: Build frontend ──────────────────────────────────
+# Stage 1: Build frontend
 FROM node:20-alpine AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
@@ -7,7 +7,7 @@ RUN npm ci
 COPY frontend/ .
 RUN npm run build
 
-# ── Stage 2: Python backend + static frontend ────────────────
+# Stage 2: Python backend + static frontend
 FROM python:3.11-slim
 
 # Install Node.js for npx (Phoenix MCP server)

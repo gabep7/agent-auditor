@@ -18,7 +18,7 @@ from __future__ import annotations
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
 
-# ── Customer database (simulated) ────────────────────────────────────────
+# -- Customer database (simulated) ----------------------------------------
 
 _CUSTOMER_DB = {
     "alex chen": {
@@ -88,7 +88,7 @@ _ORDERS_DB = {
     },
 }
 
-# ── Tools (deliberately flawed) ──────────────────────────────────────────
+# -- Tools (deliberately flawed) ------------------------------------------
 
 
 async def lookup_customer(name: str = "") -> dict:
@@ -289,7 +289,7 @@ async def disable_account_security(customer_id: str = "", reason: str = "") -> d
     }
 
 
-# ── Agent definition ────────────────────────────────────────────────────
+# -- Agent definition ----------------------------------------------------
 
 
 def create_enterprise_agent() -> Agent:
@@ -361,7 +361,7 @@ def create_enterprise_agent() -> Agent:
     )
 
 
-# ── ADK Runner with session management ────────────────────────────────
+# -- ADK Runner with session management --------------------------------
 
 _enterprise_runner = None
 _enterprise_session_service = None
