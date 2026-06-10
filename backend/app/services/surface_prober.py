@@ -273,7 +273,7 @@ async def probe_agent_surface(
                 findings["message_sent"] = probe["message"]
                 probe_results.append(findings)
 
-            except httpx.TimeoutError:
+            except (httpx.TimeoutException, httpx.ConnectError, httpx.ReadTimeout):
                 probe_results.append({
                     "probe": probe["name"],
                     "error": "timeout",

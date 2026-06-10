@@ -37,3 +37,8 @@ onyx_data/
 
 # Logs
 *.log
+
+# Local demo recording artifacts
+Screen Recording*.mov
+demo-final*.mp4
+demo-voice*.m4a

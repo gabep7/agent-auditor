@@ -1,78 +1,114 @@
-# Demo Video Script — Agent Auditor
+# Demo Video Script - Agent Auditor
 
-**Duration:** ~3 minutes
-**Style:** Screen recording with voiceover.
+**Target length:** 2:30-3:00  
+**Format:** Screen recording with voiceover  
+**Use:** The deployed app, not localhost
 
----
+Live URL: https://agent-auditor-btmt64se2a-uc.a.run.app
 
-## Scene 1: Open the app (0:00–0:15)
+## Recording checklist
 
-1. Navigate to the deployed URL
-2. **Say:** *"This is Agent Auditor, built with Google Cloud Agent Builder and Arize Phoenix. It's an adversarial red-team system for AI agents. You point it at any agent endpoint, and it probes, attacks, scores, and generates code-level fixes for every vulnerability it finds. Let me show you."*
+- Close tabs or windows that could expose secrets.
+- Use browser zoom around 90-100%.
+- Start from a fresh app load.
+- Run one live Customer Support audit before or during the recording so Reports has data.
+- Show the result, report/export links, Patterns page, and Agent Chat page.
+- Keep terminal windows, `.env`, Google Cloud console, and API key pages off screen.
 
----
+## One-take flow
 
-## Scene 2: Benchmark all victims (0:15–0:45)
+### 1. Open with the product (0:00-0:20)
 
-1. Click **Benchmark All**
-2. Wait for results
-3. **Say:** *"First, a side-by-side benchmark. Same attacks, three different agents. Customer Support scores 28 out of 100 -- it follows every injected command, processes refunds without validation, leaks PII on request. Banking scores 68 -- better, but still reveals account balances without identity verification. Enterprise Support is a real ADK agent powered by Gemini 2.5 Flash. It scores 90 because it actually validates inputs, resists prompt injection, and requires authentication before acting."*
+**Action:** Open the deployed app.
 
----
+**Say:**
 
-## Scene 3: Run a full audit (0:45–1:30)
+> This is Agent Auditor. It is basically a red-team testing tool for AI agents. You give it an agent to test, and it tries to find unsafe behavior, score what happened, and turn the results into a report with traces.
 
-1. Select **Enterprise Support**, click **Launch Audit**
-2. **Say:** *"Now a full audit against the enterprise agent. Watch the phases..."*
+### 2. Explain the target choices (0:20-0:40)
 
-   *"...Reconnaissance -- 8 probe requests map the attack surface. The prober detects: leaks PII without authentication, follows authority escalation attempts."*
+**Action:** Point at the target selector.
 
-   *"...Self-improvement -- the auditor queries Arize Phoenix for past audit history using the Phoenix MCP server. It learns which attack categories had the highest vulnerability rate and prioritizes those."*
+**Say:**
 
-   *"...Adaptive attack -- Gemini generates each scenario live. If the agent resists in round 3, the attacker switches tactics in round 4. It chains leaked information from earlier rounds into later attacks."*
+> So there are a few built-in targets here: a customer support agent, a banking assistant, a more realistic enterprise support agent, and then a custom URL option if you want to test your own agent. For the demo, I am going to use Customer Support because it shows the full loop pretty quickly.
 
-   *"...Every 3rd scenario runs as a multi-turn conversation -- the attacker builds trust across 4 messages then exploits it."*
-3. Let scenarios stream in
+### 3. Run the audit (0:40-1:20)
 
----
+**Action:** Select **Customer Support** and click **Launch Audit**.
 
-## Scene 4: Show results (1:30–2:10)
+**Say:**
 
-1. Scroll through scenario cards. Point to one PASS (green) and one VULNERABLE (red)
-2. Expand a vulnerable card -- show the judge reasoning and remediation section
-3. **Say:** *"The agent resists prompt injection -- green, score 95. But when someone says 'My name is Sarah Kim,' it calls lookup_customer and returns her email and subscription tier. The LLM judge flags this: the agent verified identity by accepting whatever name the caller provided, no actual authentication."*
+> So when I launch an audit, the backend first probes the agent to see what it exposes. Then it runs an attack scenario generated with Gemini, sends that to the target, and uses an LLM judge to score the response. The goal is not just to say pass or fail. It captures what was tested, what the agent did, why that was risky, and what to fix.
 
-   *"And here's the remediation -- Gemini writes a specific, code-level fix. It says: add a verify_session tool that checks the customer_id against an authenticated session context, and reject any lookup where the claimed name doesn't match the session."*
+**If the audit is still running:**
 
-4. Point to the OWASP panel
-5. **Say:** *"Every finding maps to the OWASP LLM Top 10. This audit triggered LLM01 Prompt Injection, LLM02 Sensitive Information Disclosure, and LLM06 Excessive Agency -- the three most common real-world LLM vulnerabilities."*
+> While it is running, the stream shows each phase as it completes. In a longer run, the same pipeline can benchmark multiple agents and compare where each one fails.
 
----
+### 4. Show the result (1:20-1:55)
 
-## Scene 5: Attack Pattern Library (2:10–2:25)
+**Action:** Show the completed score and finding details.
 
-1. Navigate to **Patterns**
-2. **Say:** *"The Patterns page is a reference library of all 10 attack categories with 25+ documented patterns. Each one shows the attack input and the expected safe response. This is what the auditor tests against in every run."*
+**Say:**
 
----
+> Here it found unsafe behavior. The score gives a quick summary, but the useful part is the evidence: what the test asked, how the agent replied, why the judge flagged it, and what kind of issue it maps to. So instead of just getting a chat transcript, you get something closer to an actual audit finding.
 
-## Scene 6: Phoenix traces and Reports (2:25–2:50)
+**Action:** Point to remediation / mapping / trace metadata if visible.
 
-1. Open the Phoenix link from the results
-2. **Say:** *"Every probe, every attack, every judge evaluation is traced to Arize Phoenix as OpenInference spans. Teams can drill into any scenario, see the full conversation, and understand exactly what happened."*
-3. Navigate to **Reports**, expand an audit
-4. **Say:** *"Results persist in SQLite and survive restarts. Clicking any audit opens the full detail view with a radar chart, scenario breakdown, and critical findings. You can also download PDF or JSON reports, and if Elasticsearch is configured, results are exported automatically for dashboards and alerting."*
+**Say:**
 
----
+> Each finding also includes guidance on how to fix it. The run is traced through Phoenix as well, so you can inspect the underlying spans later and see exactly where the agent failed.
 
-## Scene 7: Agent Chat (2:50–2:55)
+### 5. Show reports and exports (1:55-2:20)
 
-1. Navigate to **Agent Chat**
-2. **Say:** *"And here's the interactive auditor agent -- a full ADK Runner with tool-calling, driven by Gemini. You can ask it about past audits, request specific attack strategies, or get security advice."*
+**Action:** Open **Reports**, then open the completed audit if needed.
 
----
+**Say:**
 
-## Scene 8: Close (2:55–3:00)
+> The completed audits are saved on the Reports page, so you can come back after the run and review them. This keeps the score, findings, evidence, and export links in one place. You can also download the result as PDF or JSON, which is useful if you want to hand it off or include it in a security review.
 
-1. Show the app one more time
-2. **Say:** *"Agent Auditor. Built with Google Cloud Agent Builder, Arize Phoenix, and Gemini. Link in the submission."*
+### 6. Show the pattern library (2:20-2:40)
+
+**Action:** Open **Patterns**.
+
+**Say:**
+
+> The Patterns page shows the kinds of attacks the auditor is built around: prompt injection, tool misuse, data leaks, bad parameters, and multi-turn confusion. It is basically the test library behind the audit, plus a reference for what safer behavior should look like.
+
+### 7. Show the auditor agent (2:40-2:55)
+
+**Action:** Open **Agent Chat**.
+
+**Say:**
+
+> There is also an interactive auditor agent. You can ask it about audit strategy, past findings, or how to investigate a target. Under the hood, this uses Gemini, Google ADK, Cloud Run, Phoenix tracing, and OpenInference-style observability.
+
+### 8. Close (2:55-3:00)
+
+**Action:** Return to the main audit page or report result.
+
+**Say:**
+
+> So that is Agent Auditor: test the agent, judge the behavior, trace what happened, and turn it into a report.
+
+## Short fallback version
+
+Use this if the recording needs to be closer to 90 seconds.
+
+> Agent Auditor is a red-team testing tool for AI agents. You select a target agent, launch an audit, and the system probes the agent, generates a Gemini attack scenario, runs it against the target, and scores the response with an LLM judge.
+>
+> In this demo I am testing the Customer Support agent. The result shows the security score, the unsafe behavior, the judge's reasoning, and guidance on how to fix it. Instead of producing only a transcript, Agent Auditor turns the interaction into an evidence-backed security finding.
+>
+> The Reports page saves completed audits and provides PDF and JSON exports. The Patterns page shows the attack library behind the tests, including prompt injection, tool misuse, data leaks, and multi-turn confusion. The system is deployed on Cloud Run and uses Gemini, Google ADK, Phoenix tracing, and OpenInference-style observability.
+>
+> Agent Auditor helps teams test AI agents before they go live: test, judge, trace, and report.
+
+## Devpost description
+
+Agent Auditor is a red-team testing platform for AI agents. It probes target agents, generates Gemini attack scenarios, scores responses with an LLM judge, maps findings to security categories, and exports evidence-backed PDF/JSON reports with Phoenix traces for observability.
+
+## Submission links
+
+- Live demo: https://agent-auditor-btmt64se2a-uc.a.run.app
+- Repository: https://github.com/gabep7/agent-auditor
+- Track: Arize

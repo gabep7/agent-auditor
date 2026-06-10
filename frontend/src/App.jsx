@@ -11,19 +11,13 @@ export default function App() {
   return (
     <div className="flex h-screen flex-col overflow-hidden grid-bg md:flex-row">
       <Sidebar current={page} onNavigate={setPage} />
-      <main className="flex-1 overflow-y-auto p-4 md:p-5">
-        <section className={page === 'audit' ? 'block h-full' : 'hidden'}>
-          <AuditPage />
-        </section>
-        <section className={page === 'chat' ? 'block h-full' : 'hidden'}>
-          <AgentChatPage />
-        </section>
-        <section className={page === 'reports' ? 'block h-full' : 'hidden'}>
-          <ReportPage active={page === 'reports'} />
-        </section>
-        <section className={page === 'patterns' ? 'block h-full' : 'hidden'}>
-          <PatternsPage />
-        </section>
+      <main className="flex-1 overflow-y-auto flex justify-center">
+        <div className="w-full max-w-5xl px-8 py-6 md:px-12 md:py-8">
+          {page === 'audit' && <AuditPage />}
+          {page === 'chat' && <AgentChatPage />}
+          {page === 'reports' && <ReportPage active />}
+          {page === 'patterns' && <PatternsPage />}
+        </div>
       </main>
     </div>
   );

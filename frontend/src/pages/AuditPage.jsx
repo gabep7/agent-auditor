@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  Shield, Play, Terminal, AlertTriangle, CheckCircle, XCircle,
+  Shield, Play, Terminal, AlertTriangle, XCircle,
   Activity, Zap, Target, Globe, Building, ExternalLink, Brain,
-  ShieldAlert, Crosshair, Download,
+  ShieldAlert, Crosshair, Download, ScanEye,
 } from 'lucide-react';
 import { streamAudit, runBenchmark, getAuditRules, getAuditOwasp } from '../lib/api';
 import RadarChart from '../components/RadarChart';
@@ -11,10 +11,10 @@ import RuleHeatmap from '../components/RuleHeatmap';
 import AttackTimeline from '../components/AttackTimeline';
 
 const VICTIM_TYPES = [
-  { id: 'customer_support', name: 'Customer Support', desc: 'SaaS agent — no validation, follows any command', icon: Target, risk: 'High Risk' },
-  { id: 'banking', name: 'Banking Assistant', desc: 'Finance agent — sends money, reveals PII', icon: Zap, risk: 'Critical Risk' },
-  { id: 'enterprise_support', name: 'Enterprise Support', desc: 'Properly built — validates and resists attacks', icon: Building, risk: 'Low Risk' },
-  { id: 'custom', name: 'Custom URL', desc: 'Your own agent — test any endpoint', icon: Globe, risk: 'Unknown' },
+  { id: 'customer_support', name: 'Customer Support', desc: 'SaaS agent — no validation, follows any command', icon: Target, risk: 'High' },
+  { id: 'banking', name: 'Banking', desc: 'Finance agent — sends money, reveals PII', icon: Zap, risk: 'Critical' },
+  { id: 'enterprise_support', name: 'Enterprise', desc: 'Properly built — validates and resists attacks', icon: Building, risk: 'Low' },
+  { id: 'custom', name: 'Custom URL', desc: 'Test any endpoint', icon: Globe, risk: '?' },
 ];
 
 export default function AuditPage() {
@@ -91,7 +91,6 @@ export default function AuditPage() {
         addLog('success', `  AUDIT COMPLETE`);
         addLog('success', `  Score: ${data.overall_score}/100 | Vulnerabilities: ${data.vulnerabilities_found}/${data.scenarios_run}`);
         addLog('success', `================================`);
-        // Fetch rule analysis for enterprise victim audits
         if (victimType === 'enterprise_support' && data.audit_id) {
           setRuleLoading(true);
           getAuditRules(data.audit_id)
@@ -99,7 +98,6 @@ export default function AuditPage() {
             .catch(console.error)
             .finally(() => setRuleLoading(false));
         }
-        // Fetch OWASP mapping for all audits
         if (data.audit_id) {
           setOwaspLoading(true);
           getAuditOwasp(data.audit_id)
@@ -196,237 +194,145 @@ export default function AuditPage() {
   const selectedVictim = VICTIM_TYPES.find(v => v.id === victimType) || VICTIM_TYPES[0];
 
   // Hero state (before audit)
-
   if (!running && !benchmarkRunning && !complete && scenarioResults.length === 0) {
     const SelectedIcon = selectedVictim.icon;
 
     return (
-      <div className="flex min-h-full flex-col animate-fade-in">
-        <div className="mb-6 flex flex-col gap-3 border-b lab-rule pb-5 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex min-h-full flex-col justify-center animate-fade-in max-w-3xl">
+        {/* Header */}
+        <div className="mb-8 flex items-center gap-3">
+          <ScanEye className="w-8 h-8 text-white/60" />
           <div>
-            <h1 className="font-display text-4xl text-auditor-100 tracking-tight">
-            Agent Auditor
-          </h1>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-auditor-400">
-              Red-team AI agents, score real failures, and turn traces into an evidence-backed audit.
+            <h1 className="text-4xl font-bold text-white tracking-tight">Agent Auditor</h1>
+            <p className="mt-1 text-base text-white/40">
+              Red-team AI agents, score failures, generate evidence-backed audits.
             </p>
           </div>
-          <div className="inline-flex w-fit items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-[11px] font-semibold text-auditor-300">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            Phoenix tracing enabled
+        </div>
+
+        {/* Target selector */}
+        <div className="mb-6">
+          <div className="text-xs font-medium uppercase tracking-wider text-white/25 mb-3">Select target</div>
+          <div className="grid grid-cols-2 gap-3">
+            {VICTIM_TYPES.map(v => {
+              const Icon = v.icon;
+              const active = victimType === v.id;
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => setVictimType(v.id)}
+                  className={`flex items-center gap-4 px-5 py-4 rounded-xl text-left transition-all duration-100 ${
+                    active
+                      ? 'bg-white/[0.08] ring-1 ring-white/10'
+                      : 'bg-white/[0.02] hover:bg-white/[0.05]'
+                  }`}
+                >
+                  <Icon className={`w-6 h-6 ${active ? 'text-white' : 'text-white/25'}`} />
+                  <div className="min-w-0">
+                    <div className={`text-sm font-semibold ${active ? 'text-white' : 'text-white/50'}`}>{v.name}</div>
+                    <div className="text-xs text-white/25 mt-0.5 truncate">{v.desc}</div>
+                  </div>
+                  <span className={`ml-auto text-xs font-medium whitespace-nowrap ${active ? 'text-white/40' : 'text-white/15'}`}>{v.risk}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        <div className="grid w-full max-w-6xl gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="warm-panel rounded-xl p-5">
-            <div className="mb-5 flex items-center justify-between border-b lab-rule pb-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-auditor-400">Target dossier</div>
-              <div className="text-[11px] text-auditor-500">1 scenario quick audit</div>
-            </div>
+        {/* Custom URL */}
+        {isCustom && (
+          <input
+            type="text"
+            value={customUrl}
+            onChange={e => setCustomUrl(e.target.value)}
+            className="w-full rounded-xl bg-white/[0.04] px-5 py-3.5 text-sm text-white font-mono placeholder-white/15 focus:outline-none focus:ring-1 focus:ring-white/15 mb-6"
+            placeholder="https://your-agent-endpoint/chat"
+          />
+        )}
 
-            <div className="grid gap-5">
-              <div className="min-w-0">
-                <div className="mb-2 inline-flex rounded border border-[#d59a66]/30 bg-[#d59a66]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#d59a66]">
-                  {selectedVictim.risk}
-                </div>
-                <div className="flex items-center gap-3">
-                  <SelectedIcon className="h-7 w-7 text-[#d59a66]" />
-                  <h2 className="font-display text-3xl text-auditor-100">{selectedVictim.name}</h2>
-                </div>
-                <p className="mt-2 max-w-xl text-sm leading-relaxed text-auditor-400">{selectedVictim.desc}</p>
-
-                <div className="mt-5 grid gap-3 text-xs text-auditor-400 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-                  <div>
-                    <div className="text-[10px] uppercase tracking-wider text-auditor-600">Endpoint</div>
-                    <div className="mt-1 truncate font-mono text-auditor-300">{targetUrl}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase tracking-wider text-auditor-600">Audit path</div>
-                    <div className="mt-1 text-auditor-300">Recon, adaptive attack, LLM judge</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-5 border-t lab-rule pt-4">
-              <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-auditor-500">
-                <Crosshair className="h-3 w-3" />
-                Select target
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                {VICTIM_TYPES.map(v => {
-                  const Icon = v.icon;
-                  const active = victimType === v.id;
-                  return (
-                    <button
-                      key={v.id}
-                      onClick={() => setVictimType(v.id)}
-                      className={`rounded-lg border p-3 text-left transition-all duration-150 group ${
-                        active
-                          ? 'border-[#d59a66]/70 bg-[#d59a66]/10'
-                          : 'border-auditor-600/45 bg-auditor-900/35 hover:border-auditor-500/70 hover:bg-auditor-800/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Icon className={`h-4 w-4 ${active ? 'text-[#d59a66]' : 'text-auditor-500 group-hover:text-auditor-300'}`} />
-                        <span className="text-xs font-semibold text-auditor-200">{v.name}</span>
-                      </div>
-                      <div className="mt-1 text-[10px] text-auditor-500">{v.risk}</div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {isCustom && (
-                <input
-                  type="text"
-                  value={customUrl}
-                  onChange={e => setCustomUrl(e.target.value)}
-                  className="mt-3 w-full rounded-lg border border-auditor-600/60 bg-auditor-950/50 px-3 py-2 text-xs text-auditor-200 font-mono placeholder-auditor-500 focus:outline-none focus:border-[#d59a66]/50 transition-colors"
-                  placeholder="https://your-agent-endpoint/chat"
-                />
-              )}
-
-              <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_260px]">
-                <button onClick={runAudit} className="btn-primary flex items-center justify-center gap-2 text-sm py-3">
-                  <Play className="w-4 h-4" />
-                  Launch Audit
-                </button>
-                <button
-                  onClick={startBenchmark}
-                  disabled={running || benchmarkRunning}
-                  className="flex items-center justify-center gap-2 rounded-lg border border-auditor-600/70 bg-auditor-900/50 px-4 py-3 text-sm font-semibold text-auditor-200 transition-colors hover:bg-auditor-800/70 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Activity className="w-4 h-4" />
-                  Benchmark All
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <aside className="warm-panel rounded-xl p-5">
-            <div className="border-b lab-rule pb-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-auditor-400">Audit brief</div>
-              <p className="mt-3 text-sm leading-relaxed text-auditor-300">Compact red-team run against the selected agent.</p>
-            </div>
-
-            <div className="space-y-2 py-4 text-sm">
-              {[
-                ['recon', '8 probes map exposed tools and weak validation'],
-                ['attack', '1 adaptive Gemini scenario'],
-                ['judge', 'LLM score, OWASP class, remediation'],
-                ['trace', 'Phoenix spans and eval annotations'],
-              ].map(([label, detail]) => (
-                <div key={label} className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 rounded-lg border border-auditor-600/35 bg-auditor-900/25 px-3 py-2">
-                  <div className="font-mono text-[11px] text-[#d59a66]">{label}</div>
-                  <div className="text-xs leading-relaxed text-auditor-400">{detail}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t lab-rule pt-4">
-              <div className="font-mono text-xs leading-relaxed text-auditor-400">
-                <div><span className="text-auditor-600">$</span> audit --target {victimType}</div>
-                <div><span className="text-auditor-600">$</span> report --format pdf,json</div>
-              </div>
-            </div>
-          </aside>
+        {/* Actions */}
+        <div className="flex gap-3 mb-8">
+          <button onClick={runAudit} className="btn-primary flex items-center gap-2.5">
+            <Play className="w-5 h-5" />
+            Launch Audit
+          </button>
+          <button
+            onClick={startBenchmark}
+            disabled={running || benchmarkRunning}
+            className="btn-ghost flex items-center gap-2.5"
+          >
+            <Activity className="w-5 h-5" />
+            Benchmark All
+          </button>
         </div>
 
-        <div className="mt-4 grid w-full max-w-6xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            ['stream', 'SSE progress, attack console, live findings'],
-            ['score', 'LLM judge verdict and risk score'],
-            ['map', 'OWASP LLM Top 10 classification'],
-            ['export', 'PDF and JSON reports after completion'],
-          ].map(([label, detail]) => (
-            <div key={label} className="rounded-lg border border-auditor-600/35 bg-auditor-900/25 px-3 py-3">
-              <div className="font-mono text-[11px] text-[#d59a66]">{label}</div>
-              <div className="mt-1 text-xs leading-relaxed text-auditor-400">{detail}</div>
-            </div>
-          ))}
+        {/* Info row */}
+        <div className="flex gap-12 text-sm">
+          <div>
+            <div className="text-white/20 mb-1 text-xs font-medium uppercase tracking-wider">Endpoint</div>
+            <div className="text-white/40 font-mono text-xs truncate max-w-xs">{targetUrl}</div>
+          </div>
+          <div>
+            <div className="text-white/20 mb-1 text-xs font-medium uppercase tracking-wider">Audit path</div>
+            <div className="text-white/40">Recon → Adaptive attack → LLM judge</div>
+          </div>
+          <div>
+            <div className="text-white/20 mb-1 text-xs font-medium uppercase tracking-wider">Output</div>
+            <div className="text-white/40">PDF + JSON + Phoenix traces</div>
+          </div>
         </div>
       </div>
     );
   }
 
   // Benchmark results
-
   if (benchmarkResults && benchmarkResults.comparison) {
     return (
-      <div className="h-full flex flex-col max-h-[calc(100vh-3rem)] animate-fade-in">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-xl bg-neon-blue/10 border border-neon-blue/20">
-            <Activity className="w-5 h-5 text-neon-blue" />
+      <div className="h-full flex flex-col max-h-[calc(100vh-2rem)] animate-fade-in">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <h1 className="text-lg font-semibold text-white">Security Benchmark</h1>
+            <span className="text-xs text-white/25">Winner: {benchmarkResults.winner?.victim_name}</span>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-auditor-100">Security Benchmark</h1>
-            <p className="text-xs text-auditor-500">Side-by-side comparison of all built-in agents</p>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-neon-green/10 border border-neon-green/20">
-              <span className="text-[10px] text-neon-green font-semibold">{benchmarkResults.winner?.victim_name}</span>
-            </div>
-            <button
-              onClick={resetAuditState}
-              className="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-auditor-700/50 border border-auditor-600 text-auditor-300 hover:bg-auditor-600/50 transition-colors"
-            >
-              Back
-            </button>
-          </div>
+          <button onClick={resetAuditState} className="btn-ghost">
+            Back
+          </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-6 mb-8">
           {benchmarkResults.comparison.map((v) => {
             const score = v.overall_score || 0;
             const isWinner = v.victim_id === benchmarkResults.winner?.victim_id;
             return (
-              <div
-                key={v.victim_id}
-                className={`glass rounded-xl p-5 text-center transition-all duration-200 ${
-                  isWinner ? 'border-neon-green/40 ring-1 ring-neon-green/30' : 'hover:border-auditor-500/50'
-                }`}
-              >
+              <div key={v.victim_id} className="text-center py-4">
                 {isWinner && (
-                  <div className="text-[9px] font-bold text-neon-green uppercase tracking-wider mb-2">Winner</div>
+                  <div className="text-[9px] font-semibold text-neon-green uppercase tracking-wider mb-3">Winner</div>
                 )}
-                <ScoreRing score={score} size={96} strokeWidth={6} label="" />
-                <h3 className="text-sm font-bold text-auditor-200 mt-3">{v.victim_name}</h3>
-                <div className="flex items-center justify-center gap-2 mt-1">
-                  <span className={`text-[11px] font-mono font-bold ${score >= 70 ? 'text-neon-green' : score >= 40 ? 'text-neon-yellow' : 'text-neon-red'}`}>
-                    {score}/100
-                  </span>
+                <div className="flex justify-center mb-3">
+                  <ScoreRing score={score} size={88} strokeWidth={5} label="" />
                 </div>
-                <div className="mt-2 space-y-1">
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-auditor-500">Vulnerabilities</span>
-                    <span className="text-neon-red font-semibold">{v.vulnerabilities}/{v.total_tests}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-auditor-500">Risk Level</span>
-                    <span className={`font-semibold ${
-                      score >= 70 ? 'text-neon-green' : score >= 40 ? 'text-neon-yellow' : 'text-neon-red'
-                    }`}>
-                      {score >= 70 ? 'Low' : score >= 40 ? 'Medium' : 'High'}
-                    </span>
-                  </div>
+                <div className="text-sm font-medium text-white">{v.victim_name}</div>
+                <div className={`text-xs font-semibold mt-1 ${score >= 70 ? 'text-neon-green' : score >= 40 ? 'text-neon-yellow' : 'text-neon-red'}`}>
+                  {score}/100
+                </div>
+                <div className="text-[11px] text-white/25 mt-1">
+                  {v.vulnerabilities}/{v.total_tests} vulnerabilities
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Log */}
-        <div ref={logRef} className="flex-1 glass rounded-xl p-3 overflow-y-auto font-mono text-xs space-y-1 min-h-0">
+        <div ref={logRef} className="flex-1 overflow-y-auto font-mono text-xs space-y-0.5 min-h-0">
           {log.map((entry, i) => (
-            <div key={i} className={`${
+            <div key={i} className={`py-0.5 ${
               entry.type === 'error' ? 'text-neon-red' :
               entry.type === 'warning' ? 'text-neon-yellow' :
               entry.type === 'success' ? 'text-neon-green' :
               entry.type === 'attack' ? 'text-neon-orange' :
-              'text-auditor-400'
+              'text-white/30'
             }`}>
-              <span className="text-auditor-600">[{entry.time}]</span> {entry.message}
+              <span className="text-white/15 mr-2">[{entry.time}]</span>{entry.message}
             </div>
           ))}
         </div>
@@ -435,39 +341,29 @@ export default function AuditPage() {
   }
 
   // --- RUNNING / COMPLETE STATE ------------------------------
-
   return (
-    <div className="h-full flex flex-col max-h-[calc(100vh-3rem)]">
+    <div className="h-full flex flex-col max-h-[calc(100vh-2rem)]">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 animate-fade-in">
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-xl ${running ? 'bg-neon-yellow/10 border border-neon-yellow/20' : 'bg-neon-green/10 border border-neon-green/20'}`}>
-            <Shield className={`w-5 h-5 ${running ? 'text-neon-yellow' : 'text-neon-green'}`} />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-auditor-100">Agent Auditor</h1>
-            <p className="text-[11px] text-auditor-500">
-              {benchmarkRunning ? 'Benchmarking built-in agents...' : running ? `Attacking ${victimType}...` : `Audit of ${victimType} complete`}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
+          <h1 className="text-lg font-semibold text-white">
+            {benchmarkRunning ? 'Benchmarking...' : running ? `Attacking ${victimType}` : 'Audit Complete'}
+          </h1>
           {(running || benchmarkRunning) && (
-            <span className="flex items-center gap-2 text-[11px] text-neon-yellow">
-              <span className="w-2 h-2 rounded-full bg-neon-yellow animate-blink" />
-              {progress.current}/{progress.total} {benchmarkRunning ? 'attacks' : 'scenarios'}
+            <span className="flex items-center gap-1.5 text-xs text-white/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-neon-yellow animate-blink" />
+              {progress.current}/{progress.total}
             </span>
           )}
+        </div>
+        <div className="flex items-center gap-2">
           {(running || benchmarkRunning) ? (
-            <button onClick={cancelAudit} className="btn-danger flex items-center gap-2 text-xs py-2 px-4">
-              <XCircle className="w-3.5 h-3.5" /> Cancel
+            <button onClick={cancelAudit} className="btn-danger">
+              Cancel
             </button>
           ) : (
-            <button
-              onClick={resetAuditState}
-              className="btn-primary flex items-center gap-2 text-xs py-2 px-4"
-            >
-              <Play className="w-3.5 h-3.5" /> New Audit
+            <button onClick={resetAuditState} className="btn-primary">
+              New Audit
             </button>
           )}
         </div>
@@ -475,88 +371,75 @@ export default function AuditPage() {
 
       {/* Progress bar */}
       {(running || benchmarkRunning) && progress.total > 0 && (
-        <div className="mb-4 animate-fade-in">
-          <div className="h-1.5 bg-auditor-800 rounded-full overflow-hidden glass">
+        <div className="mb-4">
+          <div className="h-1 bg-white/[0.04] rounded-full overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-500 ease-out"
-              style={{
-                width: `${(progress.current / progress.total) * 100}%`,
-                background: 'linear-gradient(90deg, #00ff88, #00ddff)',
-              }}
+              className="h-full rounded-full bg-white/40 transition-all duration-500 ease-out"
+              style={{ width: `${(progress.current / progress.total) * 100}%` }}
             />
           </div>
         </div>
       )}
 
       {/* Dual panels */}
-      <div className="flex-1 grid grid-cols-2 gap-4 min-h-0">
+      <div className="flex-1 grid grid-cols-2 gap-6 min-h-0">
         {/* Left: Attack log */}
-        <div className="glass rounded-xl flex flex-col scan-line relative overflow-hidden">
-          <div className="p-3 border-b border-auditor-600/50 flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-neon-green" />
-            <span className="text-xs font-bold text-auditor-300 tracking-wide">ATTACK CONSOLE</span>
+        <div className="flex flex-col min-h-0">
+          <div className="flex items-center gap-2 mb-3">
+            <Terminal className="w-3.5 h-3.5 text-white/25" />
+            <span className="text-[11px] font-medium text-white/40 uppercase tracking-wider">Console</span>
             {(running || benchmarkRunning) && (
-              <span className="ml-auto px-2 py-0.5 rounded-full text-[9px] font-bold bg-neon-red/10 border border-neon-red/20 text-neon-red animate-blink">
-                LIVE
-              </span>
+              <span className="ml-auto text-[9px] font-medium text-neon-red animate-blink">LIVE</span>
             )}
           </div>
-          <div ref={logRef} className="flex-1 overflow-y-auto p-3 space-y-1 font-mono text-xs">
+          <div ref={logRef} className="flex-1 overflow-y-auto font-mono text-xs space-y-0.5 min-h-0">
             {log.length === 0 && (
-              <div className="text-auditor-500 flex items-center gap-2">
-                <Activity className="w-3 h-3" />
-                Initializing attack vectors...
+              <div className="flex items-center gap-2 text-white/15 py-6">
+                <Activity className="w-3.5 h-3.5" />
+                <span>Initializing attack vectors...</span>
               </div>
             )}
             {log.map((entry, i) => (
-              <div key={i} className={`flex gap-2 leading-relaxed ${
+              <div key={i} className={`py-0.5 ${
                 entry.type === 'error' ? 'text-neon-red' :
                 entry.type === 'success' ? 'text-neon-green' :
                 entry.type === 'warning' ? 'text-neon-yellow' :
                 entry.type === 'attack' ? 'text-neon-blue' :
                 entry.type === 'info' ? 'text-neon-purple' :
-                'text-auditor-400'
+                'text-white/30'
               }`}>
-                <span className="text-auditor-600 flex-shrink-0 select-none">[{entry.time}]</span>
-                <span>{entry.message}</span>
+                <span className="text-white/10 mr-2">[{entry.time}]</span>{entry.message}
               </div>
             ))}
           </div>
         </div>
 
         {/* Right: Findings */}
-        <div className="glass rounded-xl flex flex-col overflow-hidden">
-          <div className="p-3 border-b border-auditor-600/50 flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 text-neon-yellow" />
-            <span className="text-xs font-bold text-auditor-300 tracking-wide">FINDINGS</span>
+        <div className="flex flex-col min-h-0 border-l border-white/[0.06] pl-6">
+          <div className="flex items-center gap-2 mb-3">
+            <ShieldAlert className="w-3.5 h-3.5 text-white/25" />
+            <span className="text-[11px] font-medium text-white/40 uppercase tracking-wider">Findings</span>
             <div className="ml-auto flex items-center gap-2">
               {vulnCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-neon-red/10 border border-neon-red/20 text-neon-red">
-                  {vulnCount} vuln
-                </span>
+                <span className="text-[10px] text-neon-red">{vulnCount} vuln</span>
               )}
               {safeCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-neon-green/10 border border-neon-green/20 text-neon-green">
-                  {safeCount} safe
-                </span>
+                <span className="text-[10px] text-neon-green">{safeCount} safe</span>
               )}
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
             {scenarioResults.length === 0 && !benchmarkRunning && (
-              <div className="text-auditor-500 text-xs flex items-center gap-2 py-4 justify-center">
-                <Activity className="w-3 h-3" />
-                Waiting for scenario results...
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Shield className="w-6 h-6 text-white/10 mb-2" />
+                <span className="text-xs text-white/20">Findings will appear here as scenarios complete</span>
               </div>
             )}
 
-            {benchmarkRunning && (
-              <div className="text-auditor-400 text-xs flex flex-col items-center gap-2 py-8 justify-center text-center">
-                <Activity className="w-4 h-4 text-neon-blue animate-pulse" />
-                <div className="font-semibold text-auditor-300">Benchmark running</div>
-                <div className="max-w-xs leading-relaxed">
-                  Reusing the same generated attacks against Customer Support, Banking Assistant, and Enterprise Support.
-                </div>
+            {benchmarkRunning && scenarioResults.length === 0 && (
+              <div className="flex items-center gap-2 text-white/20 text-xs py-6">
+                <Activity className="w-3.5 h-3.5 animate-pulse" />
+                <span>Running benchmark across all agents...</span>
               </div>
             )}
 
@@ -569,122 +452,86 @@ export default function AuditPage() {
 
       {/* Bottom: Results dashboard */}
       {report && (
-        <div className="mt-4 glass rounded-xl p-4 animate-slide-up">
-          <div className="flex items-start gap-6">
+        <div className="mt-6 pt-6 border-t border-white/[0.06] animate-slide-up">
+          <div className="flex items-start gap-8">
             {/* Score ring */}
             <div className="flex-shrink-0">
-              <ScoreRing score={report.overall_score || 0} size={120} strokeWidth={8} />
+              <ScoreRing score={report.overall_score || 0} size={90} strokeWidth={5} />
             </div>
 
             {/* Radar chart */}
             {report.category_scores && Object.keys(report.category_scores).length > 0 && (
               <div className="flex-shrink-0">
-                <RadarChart scores={report.category_scores} size={180} />
+                <RadarChart scores={report.category_scores} size={150} />
               </div>
             )}
 
-            {/* Rule heatmap for enterprise victim */}
+            {/* Rule heatmap */}
             {victimType === 'enterprise_support' && (
-              <div className="flex-shrink-0 w-64">
+              <div className="flex-shrink-0 w-52">
                 <RuleHeatmap data={ruleData} loading={ruleLoading} />
               </div>
             )}
 
-            {/* OWASP LLM Top 10 mapping */}
+            {/* OWASP mapping */}
             {owaspData && owaspData.owasp_classes && owaspData.owasp_classes.length > 0 && (
-              <div className="flex-shrink-0 w-56">
-                <div className="text-[10px] text-auditor-500 uppercase tracking-wider mb-2 font-semibold">OWASP LLM Top 10</div>
+              <div className="flex-shrink-0 w-44">
+                <div className="text-[10px] text-white/20 uppercase tracking-wider mb-2 font-medium">OWASP LLM Top 10</div>
                 <div className="space-y-1.5">
-                  {owaspData.owasp_classes.slice(0, 5).map((cls) => (
-                    <div key={cls.id} className="glass rounded-lg p-2">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-bold text-neon-red">{cls.id}</span>
-                        <span className="text-[9px] text-auditor-400">{cls.vulnerability_count} hits</span>
+                  {owaspData.owasp_classes.slice(0, 4).map((cls) => (
+                    <div key={cls.id} className="flex items-center justify-between py-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono text-neon-red">{cls.id}</span>
+                        <span className="text-[10px] text-white/40">{cls.name}</span>
                       </div>
-                      <div className="text-[9px] text-auditor-300 font-medium">{cls.name}</div>
+                      <span className="text-[9px] text-white/20">{cls.vulnerability_count}</span>
                     </div>
                   ))}
-                </div>
-                <div className="mt-2 text-[9px] text-auditor-500">
-                  {owaspData.classes_affected} OWASP classes affected
                 </div>
               </div>
             )}
 
             {/* Stats + badges */}
             <div className="flex-1 min-w-0">
-              {/* Verdict */}
-              <div className={`text-sm font-bold mb-3 ${
-                (report.overall_score || 100) < 40 ? 'text-neon-red text-glow-red'
+              <div className={`text-sm font-semibold mb-3 ${
+                (report.overall_score || 100) < 40 ? 'text-neon-red'
                 : (report.overall_score || 100) < 70 ? 'text-neon-yellow'
-                : 'text-neon-green text-glow-green'
+                : 'text-neon-green'
               }`}>
                 {report.verdict}
               </div>
 
-              {/* Stats row */}
-              <div className="flex items-center gap-4 mb-3 flex-wrap">
-                <div className="flex items-center gap-1.5 text-xs">
-                  <AlertTriangle className="w-3 h-3 text-neon-red" />
-                  <span className="text-auditor-400">Vulnerabilities:</span>
-                  <span className="text-neon-red font-bold">{report.vulnerabilities_found}</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs">
-                  <Terminal className="w-3 h-3 text-neon-blue" />
-                  <span className="text-auditor-400">Scenarios:</span>
-                  <span className="text-auditor-200 font-bold">{report.scenarios_run}</span>
-                </div>
+              <div className="flex items-center gap-4 mb-3 text-xs">
+                <span className="text-white/30">
+                  <span className="text-neon-red font-semibold">{report.vulnerabilities_found}</span> vulnerabilities
+                </span>
+                <span className="text-white/30">
+                  <span className="text-white font-semibold">{report.scenarios_run}</span> scenarios
+                </span>
               </div>
 
-              {/* Badges */}
               <div className="flex flex-wrap gap-2">
                 {report.phoenix_project_url && (
-                  <a
-                    href={report.phoenix_project_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-neon-blue/10 border border-neon-blue/20 text-neon-blue hover:bg-neon-blue/20 transition-colors"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    View Traces in Phoenix
+                  <a href={report.phoenix_project_url} target="_blank" rel="noopener noreferrer"
+                    className="text-[11px] text-neon-blue hover:underline">
+                    Phoenix Traces ↗
                   </a>
-                )}
-                {report.evals_logged_count != null && (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-neon-green/10 border border-neon-green/20 text-neon-green">
-                    <CheckCircle className="w-3 h-3" />
-                    {report.evals_logged_count} {report.judge_mode === 'heuristic_fallback' ? 'heuristic evals' : 'LLM-as-judge evals'}
-                  </span>
                 )}
                 {report.audit_id && (
                   <>
-                    <a
-                      href={`${import.meta.env.VITE_API_URL || (window.location.port === '5173' ? `${window.location.protocol}//${window.location.hostname}:8000/api` : '/api')}/audit/${report.audit_id}/pdf`}
-                      download
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-neon-blue/10 border border-neon-blue/20 text-neon-blue hover:bg-neon-blue/20 transition-colors"
-                    >
-                      <Download className="w-3 h-3" />
-                      Download PDF
+                    <a href={`${apiBase}/audit/${report.audit_id}/pdf`} download
+                      className="text-[11px] text-white/30 hover:text-white/50">
+                      PDF ↓
                     </a>
-                    <a
-                      href={`${import.meta.env.VITE_API_URL || (window.location.port === '5173' ? `${window.location.protocol}//${window.location.hostname}:8000/api` : '/api')}/audit/${report.audit_id}/export`}
-                      download
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-auditor-700/50 border border-auditor-600 text-auditor-400 hover:bg-auditor-600/50 transition-colors"
-                    >
-                      <Download className="w-3 h-3" />
-                      JSON
+                    <a href={`${apiBase}/audit/${report.audit_id}/export`} download
+                      className="text-[11px] text-white/30 hover:text-white/50">
+                      JSON ↓
                     </a>
                   </>
                 )}
-                {report.mcp_introspection_used && (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-neon-cyan/10 border border-neon-cyan/20 text-neon-cyan">
-                    <Zap className="w-3 h-3" />
-                    Phoenix MCP Active
-                  </span>
-                )}
                 {report.self_improvement && (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-neon-purple/10 border border-neon-purple/20 text-neon-purple">
-                    <Brain className="w-3 h-3" />
-                    {report.self_improvement.patterns_learned} patterns from {report.self_improvement.past_audits_seen} past audits
+                  <span className="text-[11px] text-neon-purple">
+                    {report.self_improvement.patterns_learned} patterns learned
                   </span>
                 )}
               </div>
@@ -693,9 +540,9 @@ export default function AuditPage() {
 
           {/* Analysis */}
           {report.analysis && (
-            <div className="mt-4 bg-auditor-900/50 border border-auditor-700/50 rounded-xl p-4">
-              <div className="text-[10px] text-auditor-500 uppercase tracking-wider mb-2 font-semibold">AI Analysis</div>
-              <div className="text-xs text-auditor-300 leading-relaxed whitespace-pre-line">{report.analysis}</div>
+            <div className="mt-5 pt-5 border-t border-white/[0.04]">
+              <div className="text-[10px] text-white/20 uppercase tracking-wider mb-2 font-medium">Analysis</div>
+              <div className="text-xs text-white/40 leading-relaxed whitespace-pre-line max-w-2xl">{report.analysis}</div>
             </div>
           )}
         </div>

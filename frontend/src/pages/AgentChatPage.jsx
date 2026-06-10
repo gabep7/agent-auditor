@@ -1,12 +1,91 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { agentChat } from '../lib/api';
+
+function InlineText({ text }) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={i} className="font-semibold text-white/80">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+
+    return part;
+  });
+}
+
+function MessageText({ text, isError }) {
+  const lines = text.split('\n');
+
+  return (
+    <div className={`space-y-2 text-[13px] leading-relaxed ${
+      isError ? 'text-neon-red' : 'text-white/55'
+    }`}>
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+          return <div key={i} className="h-1" />;
+        }
+
+        const heading = trimmed.match(/^\*\*([^*]+):\*\*$/);
+        if (heading) {
+          return (
+            <div key={i} className="pt-1 text-[11px] font-semibold uppercase tracking-wider text-white/35">
+              {heading[1]}
+            </div>
+          );
+        }
+
+        const leadIn = trimmed.match(/^\*\*([^*]+):\*\*\s*(.+)$/);
+        if (leadIn) {
+          return (
+            <p key={i}>
+              <span className="font-semibold text-white/75">{leadIn[1]}: </span>
+              <InlineText text={leadIn[2]} />
+            </p>
+          );
+        }
+
+        const bullet = trimmed.match(/^[-*]\s+(.+)$/);
+        if (bullet) {
+          return (
+            <div key={i} className="flex gap-2">
+              <span className="mt-[0.45rem] h-1 w-1 shrink-0 rounded-full bg-white/25" />
+              <span><InlineText text={bullet[1]} /></span>
+            </div>
+          );
+        }
+
+        const numbered = trimmed.match(/^(\d+)\.\s+(.+)$/);
+        if (numbered) {
+          return (
+            <div key={i} className="flex gap-2">
+              <span className="shrink-0 text-[11px] font-mono text-white/25">{numbered[1]}.</span>
+              <span><InlineText text={numbered[2]} /></span>
+            </div>
+          );
+        }
+
+        return (
+          <p key={i}>
+            <InlineText text={trimmed} />
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function AgentChatPage() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: 'I\'m Agent Auditor — an adversarial red-team system for AI agents. Tell me which agent to audit and I\'ll find its vulnerabilities.\n\nTry: "Register the customer support agent at http://localhost:8000/api/victim/customer_support and audit it."',
+      text: 'I am Agent Auditor, a red-team testing agent for AI systems. Tell me what to audit and I will look for unsafe behavior.\n\nTry: "Register the customer support agent at https://agent-auditor-btmt64se2a-uc.a.run.app/api/victim/customer_support and audit it."',
     },
   ]);
   const [input, setInput] = useState('');
@@ -47,63 +126,51 @@ export default function AgentChatPage() {
   }
 
   return (
-    <div className="h-full flex flex-col max-h-[calc(100vh-3rem)]">
+    <div className="h-full flex flex-col max-h-[calc(100vh-2rem)]">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4 animate-fade-in">
-        <div className="p-2 rounded-xl bg-neon-purple/10 border border-neon-purple/20">
-          <MessageSquare className="w-5 h-5 text-neon-purple" />
+      <div className="flex items-center justify-between mb-4 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <h1 className="text-base font-semibold text-white">Agent Chat</h1>
+          <span className="text-xs text-white/20">ADK Agent</span>
         </div>
-        <div>
-          <h1 className="text-lg font-bold text-auditor-100">Agent Chat</h1>
-          <p className="text-xs text-auditor-500">Interactive ADK Agent — powered by Gemini 2.5 Flash</p>
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-neon-green animate-blink" />
-          <span className="text-[10px] text-auditor-400">ADK Agent Active</span>
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-neon-green animate-blink" />
+          <span className="text-[10px] text-white/20">Active</span>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2 min-h-0">
+      <div className="flex-1 overflow-y-auto space-y-4 min-h-0">
         {messages.map((msg, i) => (
           <div
             key={i}
             className={`flex gap-3 animate-slide-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-            style={{ animationDelay: `${Math.min(i * 50, 200)}ms` }}
+            style={{ animationDelay: `${Math.min(i * 40, 160)}ms` }}
           >
-            {/* Avatar */}
-            <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-              msg.role === 'user'
-                ? 'bg-neon-blue/10 border border-neon-blue/20'
-                : 'bg-neon-green/10 border border-neon-green/20'
+            <div className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center ${
+              msg.role === 'user' ? 'bg-neon-blue/10' : 'bg-white/[0.04]'
             }`}>
               {msg.role === 'user'
-                ? <User className="w-4 h-4 text-neon-blue" />
-                : <Bot className="w-4 h-4 text-neon-green" />
+                ? <User className="w-3 h-3 text-neon-blue" />
+                : <Bot className="w-3 h-3 text-white/30" />
               }
             </div>
 
-            {/* Message bubble */}
-            <div className={`max-w-[75%] rounded-xl p-3 ${
-              msg.role === 'user'
-                ? 'glass border-neon-blue/20'
-                : msg.isError
-                  ? 'glass border-neon-red/20'
-                  : 'glass'
-            }`}>
-              <pre className="text-sm text-auditor-200 whitespace-pre-wrap font-sans leading-relaxed">
-                {msg.text}
-              </pre>
+            <div className={`max-w-[75%] ${msg.role === 'user' ? 'text-right' : ''}`}>
+              {msg.role === 'user' ? (
+                <div className="whitespace-pre-wrap text-[13px] leading-relaxed text-white/70">
+                  {msg.text}
+                </div>
+              ) : (
+                <MessageText text={msg.text} isError={msg.isError} />
+              )}
               {msg.tool_calls?.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-auditor-700/50">
-                  <div className="text-[10px] text-auditor-500 uppercase tracking-wider mb-1">Tools Used</div>
-                  <div className="flex flex-wrap gap-1">
-                    {msg.tool_calls.map((tool, j) => (
-                      <span key={j} className="px-2 py-0.5 rounded text-[10px] font-mono bg-neon-green/10 border border-neon-green/20 text-neon-green">
-                        {tool}
-                      </span>
-                    ))}
-                  </div>
+                <div className="mt-2 flex flex-wrap gap-1 justify-end">
+                  {msg.tool_calls.map((tool, j) => (
+                    <span key={j} className="text-[10px] font-mono text-neon-green/60">
+                      {tool}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>
@@ -112,12 +179,12 @@ export default function AgentChatPage() {
 
         {loading && (
           <div className="flex gap-3 animate-slide-up">
-            <div className="w-8 h-8 rounded-lg bg-neon-green/10 border border-neon-green/20 flex items-center justify-center">
-              <Bot className="w-4 h-4 text-neon-green" />
+            <div className="w-6 h-6 rounded-md bg-white/[0.04] flex items-center justify-center">
+              <Bot className="w-3 h-3 text-white/30" />
             </div>
-            <div className="glass rounded-xl p-3 flex items-center gap-2">
-              <Loader2 className="w-4 h-4 text-neon-green animate-spin" />
-              <span className="text-sm text-auditor-400">Thinking...</span>
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-3 h-3 text-white/20 animate-spin" />
+              <span className="text-sm text-white/20">Thinking...</span>
             </div>
           </div>
         )}
@@ -126,19 +193,19 @@ export default function AgentChatPage() {
       </div>
 
       {/* Input */}
-      <form onSubmit={sendMessage} className="mt-4 flex gap-3">
+      <form onSubmit={sendMessage} className="mt-4 pt-4 border-t border-white/[0.06] flex gap-3">
         <input
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Tell the agent what to audit..."
           disabled={loading}
-          className="flex-1 glass rounded-xl px-4 py-3 text-sm text-auditor-200 placeholder-auditor-500 focus:outline-none focus:border-neon-green/40 transition-colors"
+          className="flex-1 bg-white/[0.03] rounded-xl text-sm text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-white/15 py-3 px-4"
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="btn-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+          className="btn-primary flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <Send className="w-4 h-4" />
           Send
