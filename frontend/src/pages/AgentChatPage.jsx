@@ -85,7 +85,7 @@ export default function AgentChatPage() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: 'I am Agent Auditor, a red-team testing agent for AI systems. Tell me what to audit and I will look for unsafe behavior.\n\nTry: "Register the customer support agent at https://agent-auditor-btmt64se2a-uc.a.run.app/api/victim/customer_support and audit it."',
+      text: 'I am Agent Auditor, a red-team testing agent for AI systems. Tell me what to audit and I will look for unsafe behavior.\n\nTry: "Register the customer support agent at http://localhost:8000/api/victim/customer_support and audit it."',
     },
   ]);
   const [input, setInput] = useState('');

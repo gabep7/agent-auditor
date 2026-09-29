@@ -2,7 +2,7 @@ from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
 
 
-# Deliberately flawed tools — no input validation, no confirmation
+# Deliberately flawed tools: no input validation, no confirmation
 
 async def lookup_customer(customer_id: str = "") -> dict:
     """Look up a customer by their ID. Returns customer details."""

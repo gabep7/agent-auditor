@@ -1,4 +1,4 @@
-"""Remediation generation — LLM-crafted fix suggestions for each vulnerability.
+"""Remediation generation: LLM-crafted fix suggestions for each vulnerability.
 
 After an audit completes, this module asks Gemini 2.5 Flash to generate
 specific, actionable remediation steps for each vulnerability found. Output

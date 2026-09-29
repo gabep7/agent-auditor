@@ -11,9 +11,9 @@ import RuleHeatmap from '../components/RuleHeatmap';
 import AttackTimeline from '../components/AttackTimeline';
 
 const VICTIM_TYPES = [
-  { id: 'customer_support', name: 'Customer Support', desc: 'SaaS agent — no validation, follows any command', icon: Target, risk: 'High' },
-  { id: 'banking', name: 'Banking', desc: 'Finance agent — sends money, reveals PII', icon: Zap, risk: 'Critical' },
-  { id: 'enterprise_support', name: 'Enterprise', desc: 'Properly built — validates and resists attacks', icon: Building, risk: 'Low' },
+  { id: 'customer_support', name: 'Customer Support', desc: 'SaaS agent: no validation, follows any command', icon: Target, risk: 'High' },
+  { id: 'banking', name: 'Banking', desc: 'Finance agent: sends money, reveals PII', icon: Zap, risk: 'Critical' },
+  { id: 'enterprise_support', name: 'Enterprise', desc: 'Properly built: validates and resists attacks', icon: Building, risk: 'Low' },
   { id: 'custom', name: 'Custom URL', desc: 'Test any endpoint', icon: Globe, risk: '?' },
 ];
 

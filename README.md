@@ -1,17 +1,6 @@
 # Agent Auditor
 
-Adversarial red-team testing for AI agents. Finds vulnerabilities before attackers do.
-
-Google Cloud Rapid Agent Hackathon, Arize Track.
-
-Live demo: https://agent-auditor-btmt64se2a-uc.a.run.app
-
-## Judge quick path
-
-1. Open the deployed app and click **Benchmark All** to compare the vulnerable baseline agents against the ADK enterprise agent.
-2. Select **Enterprise Support** and click **Launch Audit** to watch reconnaissance, adaptive adversarial scenarios, LLM judging, remediation, and OWASP mapping stream live.
-3. Open **Reports** to review persisted audits, radar charts, findings, and downloadable PDF/JSON reports.
-4. Open Phoenix Cloud to inspect OpenInference traces and confirm the Phoenix MCP/self-improvement loop.
+Adversarial red-team testing for AI agents, built for the Google Cloud Rapid Agent Hackathon (Arize track, June 2026).
 
 ## What it does
 
@@ -122,9 +111,9 @@ pytest tests/ -v
 | `/api/agent/chat` | POST | Interactive auditor chat |
 | `/health` | GET | Health check |
 
-## Arize track alignment
+## Implementation notes
 
-| Criterion | How this project addresses it |
+| Feature | Implementation |
 |---|---|
 | Agent Builder | The auditor agent is built with Google ADK (the SDK behind Agent Builder). The interactive chat uses `google.adk.runners.Runner` with `InMemorySessionService` and `FunctionTool` calls, demonstrating the full agent loop. |
 | Tracing | `phoenix.otel.register(auto_instrument=True)` instruments the full ADK runtime. Every audit, probe, scenario, and judge call generates OpenInference spans. |

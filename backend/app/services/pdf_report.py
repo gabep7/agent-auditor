@@ -1,7 +1,7 @@
 """PDF report generator for completed audits.
 
 Generates a dark-themed PDF security report matching the Agent Auditor UI.
-Uses fpdf2 — pure Python, zero system dependencies.
+Uses fpdf2: pure Python, zero system dependencies.
 """
 
 from __future__ import annotations
@@ -22,8 +22,8 @@ _COLORS = {
     "bg_card": (18, 18, 22),     # subtle card bg
     "surface": (28, 28, 34),     # elevated surface
     "border": (39, 39, 46),      # subtle borders
-    "text": (228, 228, 231),     # #e4e4e7 — white text
-    "text_dim": (113, 113, 122), # #71717a — muted text
+    "text": (228, 228, 231),     # #e4e4e7: white text
+    "text_dim": (113, 113, 122), # #71717a: muted text
     "text_muted": (63, 63, 70),  # very muted
     "green": (74, 222, 128),     # #4ade80
     "red": (248, 113, 113),      # #f87171

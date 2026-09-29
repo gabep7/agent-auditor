@@ -12,12 +12,12 @@ REGION="${GCP_REGION:-us-central1}"
 SERVICE_NAME="agent-auditor"
 
 echo "=========================================="
-echo "  Agent Auditor — Cloud Run Deploy"
+echo "  Agent Auditor: Cloud Run Deploy"
 echo "  Project: ${PROJECT_ID}"
 echo "  Region:  ${REGION}"
 echo "=========================================="
 
-# Build and deploy in one step (auto-detects Dockerfile.cloudrun)
+# Build from the root Dockerfile and deploy in one step
 echo "Building and deploying to Cloud Run..."
 gcloud run deploy "${SERVICE_NAME}" \
   --project="${PROJECT_ID}" \

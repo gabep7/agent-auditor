@@ -3,7 +3,7 @@
 Replaces the in-memory dicts (_audits, _registered_agents) so audit history
 survives restarts and the Reports page shows real data even without Phoenix.
 
-Uses Python's built-in sqlite3 module — zero new dependencies.
+Uses Python's built-in sqlite3 module: zero new dependencies.
 """
 
 from __future__ import annotations

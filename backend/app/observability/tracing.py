@@ -31,7 +31,7 @@ def setup_tracing() -> Optional[Any]:
     endpoint = (os.environ.get("PHOENIX_COLLECTOR_ENDPOINT") or "").strip()
     if not (api_key and endpoint):
         print(
-            "Phoenix tracing skipped — set PHOENIX_API_KEY and "
+            "Phoenix tracing skipped: set PHOENIX_API_KEY and "
             "PHOENIX_COLLECTOR_ENDPOINT in .env to enable"
         )
         return None
@@ -39,7 +39,7 @@ def setup_tracing() -> Optional[Any]:
     try:
         from phoenix.otel import register
     except ImportError as e:
-        print(f"Phoenix tracing skipped — arize-phoenix not installed: {e}")
+        print(f"Phoenix tracing skipped: arize-phoenix not installed: {e}")
         return None
 
     project_name = os.environ.get("PHOENIX_PROJECT_NAME", "agent-auditor")

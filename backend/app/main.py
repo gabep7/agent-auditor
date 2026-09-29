@@ -20,7 +20,7 @@ from app.api.routes import router as api_router
 
 app = FastAPI(
     title="Agent Auditor",
-    description="Adversarial testing for AI agents — find vulnerabilities before attackers do",
+    description="Adversarial red-team testing for AI agents",
     version="1.0.0",
 )
 
